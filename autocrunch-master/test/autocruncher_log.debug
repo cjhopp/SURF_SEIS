@@ -1,0 +1,145 @@
+Thu 08 10:42:46:root:INFO:***********
+Thu 08 10:42:46:root:INFO:Watching test/rsync_to_here
+Thu 08 10:42:46:root:INFO:Output dir test/output
+Thu 08 10:42:46:root:INFO:Log dir test/
+Thu 08 10:42:46:root:INFO:***********
+Thu 08 10:42:47:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file1.raw.xauX0n
+
+Thu 08 10:42:47:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file1.raw
+Thu 08 10:42:47:root:INFO:*** Job complete: Hit exception processing file: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file1.raw, exception reads:
+[Errno 17] File exists: 'test/output'
+
+Thu 08 10:42:48:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file1.raw.9Q41fv
+
+Thu 08 10:42:48:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file1.raw
+Thu 08 10:42:48:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file1.raw
+Thu 08 10:42:48:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file10.raw.uoAzyE
+
+Thu 08 10:42:48:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file10.raw
+Thu 08 10:42:49:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file10.raw
+Thu 08 10:42:49:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file2.raw.xo3qRN
+
+Thu 08 10:42:49:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file2.raw
+Thu 08 10:42:49:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file2.raw
+Thu 08 10:42:49:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file3.raw.iBSGaX
+
+Thu 08 10:42:49:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file3.raw
+Thu 08 10:42:50:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file3.raw
+Thu 08 10:42:50:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file4.raw.x7Orv6
+
+Thu 08 10:42:50:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file4.raw
+Thu 08 10:42:50:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file4.raw
+Thu 08 10:42:50:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file5.raw.wLizQf
+
+Thu 08 10:42:50:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file5.raw
+Thu 08 10:42:51:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file5.raw
+Thu 08 10:42:51:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file6.raw.Db84bp
+
+Thu 08 10:42:51:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file6.raw
+Thu 08 10:42:51:root:INFO:*** Job complete: Successfully processed /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file6.raw
+Thu 08 10:42:51:root:DEBUG:Transfer started, tempfile at:
+	/media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/.file7.raw.g8thyy
+
+Thu 08 10:42:51:root:INFO:Sending for processing: /media/psf/Google Drive/Project_Collab/VibBox/realtime/autocrunch-master/test/rsync_to_here/file7.raw
+Mon 12 23:49:44:root:INFO:***********
+Mon 12 23:49:44:root:INFO:Watching test/rsync_to_here
+Mon 12 23:49:44:root:INFO:Output dir test/output
+Mon 12 23:49:44:root:INFO:Log dir test/
+Mon 12 23:49:44:root:INFO:***********
+Mon 12 23:49:45:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file1.raw.uXoeqC
+
+Mon 12 23:49:45:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file1.raw
+Mon 12 23:49:46:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file1.raw
+Mon 12 23:49:46:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file1.raw.RlPogK
+
+Mon 12 23:49:46:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file1.raw
+Mon 12 23:49:47:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file1.raw
+Mon 12 23:49:47:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file10.raw.kkRoGl
+
+Mon 12 23:49:47:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file10.raw
+Mon 12 23:49:47:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file10.raw
+Mon 12 23:49:47:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file2.raw.rWBp6W
+
+Mon 12 23:49:47:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Mon 12 23:49:48:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Mon 12 23:49:48:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file3.raw.Ad6qwy
+
+Mon 12 23:49:48:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file3.raw
+Mon 12 23:49:48:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file3.raw
+Mon 12 23:49:48:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file4.raw.V83sW9
+
+Mon 12 23:49:48:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file4.raw
+Mon 12 23:49:49:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file4.raw
+Mon 12 23:49:49:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file5.raw.sVMvmL
+
+Mon 12 23:49:49:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file5.raw
+Mon 12 23:49:49:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file5.raw
+Mon 12 23:49:49:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file6.raw.7V4yMm
+
+Mon 12 23:49:49:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Mon 12 23:49:50:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Mon 12 23:49:50:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file7.raw.ELUCcY
+
+Mon 12 23:49:50:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file7.raw
+Mon 12 23:51:18:root:INFO:***********
+Mon 12 23:51:18:root:INFO:Watching test/rsync_to_here
+Mon 12 23:51:18:root:INFO:Output dir test/output
+Mon 12 23:51:18:root:INFO:Log dir test/
+Mon 12 23:51:18:root:INFO:***********
+Tue 13 00:01:34:root:INFO:***********
+Tue 13 00:01:34:root:INFO:Watching test/rsync_to_here
+Tue 13 00:01:34:root:INFO:Output dir test/output
+Tue 13 00:01:34:root:INFO:Log dir test/
+Tue 13 00:01:34:root:INFO:***********
+Tue 13 00:02:33:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file6.raw.DudI7P
+
+Tue 13 00:02:33:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file6.raw.DudI7P
+
+Tue 13 00:02:33:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Tue 13 00:02:33:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Tue 13 00:02:33:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Tue 13 00:02:33:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file6.raw
+Tue 13 00:09:23:root:INFO:***********
+Tue 13 00:09:23:root:INFO:Watching test/rsync_to_here
+Tue 13 00:09:23:root:INFO:Output dir test/output
+Tue 13 00:09:23:root:INFO:Log dir test/
+Tue 13 00:09:23:root:INFO:***********
+Tue 13 00:14:23:root:INFO:***********
+Tue 13 00:14:23:root:INFO:Watching test/rsync_to_here
+Tue 13 00:14:23:root:INFO:Output dir test/output
+Tue 13 00:14:23:root:INFO:Log dir test/
+Tue 13 00:14:23:root:INFO:***********
+Tue 13 00:28:09:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file2.raw.4zlmfG
+
+Tue 13 00:28:09:root:DEBUG:Transfer started, tempfile at:
+	/home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/.file2.raw.4zlmfG
+
+Tue 13 00:28:09:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Tue 13 00:28:09:root:INFO:Sending for processing: /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Tue 13 00:28:09:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Tue 13 00:28:09:root:INFO:*** Job complete: Successfully processed /home/sigmav/Vibbox_processing/autocrunch-master/test/rsync_to_here/file2.raw
+Tue 13 20:02:28:root:INFO:***********
+Tue 13 20:02:28:root:INFO:Watching test/rsync_to_here
+Tue 13 20:02:28:root:INFO:Output dir test/output
+Tue 13 20:02:28:root:INFO:Log dir test/
+Tue 13 20:02:28:root:INFO:***********
