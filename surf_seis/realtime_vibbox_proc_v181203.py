@@ -14,19 +14,15 @@ import os
 import pandas as pd
 import obspy
 from StringIO import StringIO
-import vibbox as vibbox
-from phasepapy.phasepicker import aicdpicker
+import vibbox_v2 as vibbox
+from surf_seis.phasepapy.phasepicker import aicdpicker
 import sys
 from pyproj import Proj, transform
 import multiprocessing
 import logging, logging.handlers
-import optparse
 import shutil
-import time
 import pyinotify
-import atexit
 import uuid
-import subprocess
 
 logger = logging.getLogger()
 
@@ -35,7 +31,6 @@ class options():
     watch_dir = "/data1/vbox/incoming/"
     log_dir = "/data1/vbox/log"
     output_dir = "/data1/vbox/output"
-    output_dir = "/home/sigmav/sigmav_ext"
     ext_dir = "/home/sigmav/sigmav_ext"
 
     nthreads = 6
@@ -84,7 +79,7 @@ def process_file_trigger(fname):
         logger.debug(e)
         logger.debug('Error in preprocessing ' + fname)
     try:
-        new_triggers = vibbox.vibbox_trigger(st.copy(), num=20)
+        new_triggers = vibbox.vibbox_trigger(st.copy(), num=10)
         # clean triggers
         new_triggers = vibbox.vibbox_checktriggers(new_triggers, st.copy())
         res = new_triggers.to_csv(header=False, float_format='%5.4f', index=False)
@@ -101,8 +96,6 @@ def process_file_trigger(fname):
         for index, ev in new_triggers.iterrows():
             ste = st.copy().trim(starttime = ev['time'] - 0.01,  endtime = ev['time'] + ev['duration'] + 0.01)
             outname = mseedpath + '{:10.2f}'.format(ev['time'].timestamp)  + '.mseed'
-            if not os.path.exists(mseedpath):
-                os.makedirs(mseedpath)
             ste.write(outname, format='mseed')
     except Exception as e:
         logger.info(e)
@@ -171,36 +164,6 @@ def process_file_pick(trigger):
         return 0
     return picks
 
-# def plot_picks(my_picks, st):
-#     colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
-#     names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
-#     my_picks = pd.read_fwf(StringIO(my_picks), colspecs=colspecs, names=names)
-#     my_picks['origin'] = my_picks['origin'].apply(obspy.UTCDateTime)
-#     my_picks['pick'] = my_picks['pick'].apply(obspy.UTCDateTime)
-# 
-#     num_picks= len(my_picks)
-#     starttime = st[0].stats.starttime
-#     dt = st[0].stats.delta
-#     fig, axs = plt.subplots(num_picks, 1, sharex=True)
-#     plt.suptitle('event ' + str(starttime), color='red')
-#     for ii in range(num_picks):
-#         station = my_picks['station'].iloc[ii]
-#         tr = st.select(station=station)
-#         axs[ii].plot(tr[0].data, c='k')
-#         axs[ii].hold(True)
-#         axs[ii].set_yticks([])
-#         ix = (my_picks['pick'].iloc[ii] - starttime) / dt
-#         axs[ii].axvline(x=ix, c=(1.0, 0.0, 0.0))
-#         ylim = axs[ii].get_ylim()
-#         axs[ii].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], station)
-#     fig.set_size_inches(10.5, 2*num_picks)
-#     plt.tight_layout(pad=0.0, h_pad=0.0)
-#     plt.savefig(pngpath + '{:10.2f}'.format(my_picks['eventid'].iloc[0]) + '.png')
-#     plt.close()
-#     plt.gcf().clear()
-#     plt.cla()
-#     plt.clf()
-
 def plot_picks(my_picks, st):
     colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
     names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
@@ -211,7 +174,7 @@ def plot_picks(my_picks, st):
     num_picks= len(my_picks)
     starttime = st[0].stats.starttime
     dt = st[0].stats.delta
-    fig, axs = plt.subplots(num_picks + 1, 1, sharex=True)
+    fig, axs = plt.subplots(num_picks, 1, sharex=True)
     plt.suptitle('event ' + str(starttime), color='red')
     for ii in range(num_picks):
         station = my_picks['station'].iloc[ii]
@@ -223,15 +186,8 @@ def plot_picks(my_picks, st):
         axs[ii].axvline(x=ix, c=(1.0, 0.0, 0.0))
         ylim = axs[ii].get_ylim()
         axs[ii].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], station)
-    # plot CASSM signal
-    axs[ii+1].plot(st[60].data, c='k')
-    axs[ii+1].hold(True)
-    axs[ii+1].set_yticks([])
-    axs[ii+1].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], 'CASSM')
-    fig.set_size_inches(10.5, 2*(num_picks+1))
+    fig.set_size_inches(10.5, 2*num_picks)
     plt.tight_layout(pad=0.0, h_pad=0.0)
-    if not os.path.exists(pngpath):
-        os.makedirs(pngpath)
     plt.savefig(pngpath + '{:10.2f}'.format(my_picks['eventid'].iloc[0]) + '.png')
     plt.close()
     plt.gcf().clear()
@@ -428,25 +384,7 @@ def postprocess_hyp(my_uuid):
 
 def process_rawfile(file):
     if not is_rawfile(file):
-        return 'Finished processing file, not a raw file: ' + file
-    try:
-        with open(fn_recent) as f:
-             recent_files = f.read().splitlines()
-        if file in recent_files:
-             logger.debug('File was already processed: ' + file)
-             return 'Finished processing file, already processed: ' + file
-        else:
-             logger.debug('File not yet processed send ' + file)
-             recent_files.append(file)
-             if len(recent_files) > 100:
-                 recent_files = recent_files[1:]
-             with open(fn_recent, 'w') as f:
-                 for item in recent_files:
-                     f.write("%s\n" % item)
-    except Exception as e:
-        logger.debug(e)
-        logger.debug('Cannot determine if in recent files ', file_path)
-
+        return 0
     my_uuid = str(uuid.uuid4())
     try:
         os.makedirs(output_path + my_uuid)
@@ -456,13 +394,12 @@ def process_rawfile(file):
     df_triggers = process_file_trigger(file)
     filename = os.path.split(file)[-1]
     try:
-# this may cause issues with some file systems, use subprocess.call instead
-#        shutil.move(file, os.path.join(options.ext_dir, filename))
-        subprocess.call(['mv',file, os.path.join(options.ext_dir, filename)])
+        shutil.move(file, os.path.join(options.ext_dir, filename))
         logger.info('Moved to external drive ' + os.path.join(options.ext_dir, filename))
     except Exception as e:
         logger.info(e)
         logger.info('Cannot move to external drive ' + os.path.join(options.ext_dir, filename))
+#    check_external_harddrives()
     try:
         if len(df_triggers)>0:
             df_triggers.to_csv(fn_triggers, mode='a', header=False, index=False)
@@ -524,7 +461,6 @@ def processed_callback(summary):
 
 def main(options):
 
-
     def simply_process_rawfile(file_path):
         """
         Wraps `process_rawfile` to take a single argument (file_path).
@@ -547,6 +483,7 @@ def main(options):
         pool.apply_async(process_rawfile,
              [file_path],
              callback=processed_callback)
+
 
     """Define processing logic and fire up the watcher"""
     watch_dir = options.watch_dir
@@ -618,8 +555,7 @@ if __name__ == '__main__':
     fn_triggers = output_path + my_datestr + '_triggers' + '.csv'
     fn_picks = output_path + my_datestr + '_picks' + '.csv'
     fn_catalog = output_path + my_datestr + '_catalog' + '.csv'
-    fn_error = output_path + my_datestr + '_error' + '.txt'
-    fn_recent = output_path + my_datestr + '_recents' + '.txt'
+    fn_error = output_path + my_datestr + 'error' + '.csv'
 
     # make folders
     mseedpath = output_path + 'triggers/'
@@ -639,9 +575,6 @@ if __name__ == '__main__':
     f_triggers = open(fn_triggers, 'wb')
     f_triggers.write(header + '\n')
     f_triggers.close()
-
-    f_recent = open(fn_recent, 'wb')
-    f_recent.close()
 
     stations = ['PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12',
                 'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07', 'OT08', 'OT09', 'OT10', 'OT11', 'OT12',

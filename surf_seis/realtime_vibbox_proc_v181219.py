@@ -14,18 +14,16 @@ import os
 import pandas as pd
 import obspy
 from StringIO import StringIO
-import vibbox_v2 as vibbox
-from phasepapy.phasepicker import aicdpicker
+from surf_seis import vibbox as vibbox
+from surf_seis.phasepapy.phasepicker import aicdpicker
 import sys
 from pyproj import Proj, transform
 import multiprocessing
 import logging, logging.handlers
-import optparse
 import shutil
-import time
 import pyinotify
-import atexit
 import uuid
+import subprocess
 
 logger = logging.getLogger()
 
@@ -72,44 +70,44 @@ class RsyncNewFileHandler(pyinotify.ProcessEvent):
 def process_file_trigger(fname):
     try:
         st = vibbox.vibbox_read(fname)
-        print('Read ' + fname)
+        logger.info('Read ' + fname)
     except Exception as e:
-        print(e)
-        print('Cannot read ' + fname)
+        logger.info(e)
+        logger.info('Cannot read ' + fname)
     try:
         st = vibbox.vibbox_preprocess(st)
     except Exception as e:
-        print(e)
-        print('Error in preprocessing ' + fname)
+        logger.debug(e)
+        logger.debug('Error in preprocessing ' + fname)
     try:
-        new_triggers = vibbox.vibbox_trigger(st.copy())
+        new_triggers = vibbox.vibbox_trigger(st.copy(), num=20)
         # clean triggers
         new_triggers = vibbox.vibbox_checktriggers(new_triggers, st.copy())
         res = new_triggers.to_csv(header=False, float_format='%5.4f', index=False)
     except Exception as e:
-        print(e)
-        print('Error in triggering ' + fname)
+        logger.debug(e)
+        logger.debug('Error in triggering ' + fname)
         return 0
     try:
         st = vibbox.vibbox_custom_filter(st)
     except Exception as e:
-        print(e)
-        print('Error in filtering ' + fname)
+        logger.debug(e)
+        logger.debug('Error in filtering ' + fname)
     try:
         for index, ev in new_triggers.iterrows():
             ste = st.copy().trim(starttime = ev['time'] - 0.01,  endtime = ev['time'] + ev['duration'] + 0.01)
             outname = mseedpath + '{:10.2f}'.format(ev['time'].timestamp)  + '.mseed'
             ste.write(outname, format='mseed')
     except Exception as e:
-        print(e)
-        print('Error in saving ' + fname)
+        logger.info(e)
+        logger.info('Error in saving ' + fname)
         return 0
     return new_triggers
 
 def process_file_pick(trigger):
     # calculate trigger strength on Accelerometers and skip picking if it is small
     trigger_strength = np.prod(trigger[26:62])
-#    print('Trigger strength: ' + str(trigger_strength))
+    #logger.debug('Trigger strength: ' + str(trigger_strength))
     if trigger_strength < 10000:
         return 0
     # check if we trigger at a minimum of 4 accelerometers
@@ -126,44 +124,44 @@ def process_file_pick(trigger):
     fname = mseedpath + '{:10.2f}'.format(trigger['time'].timestamp)  + '.mseed'
 
     try:
-        print('Reading ' + fname)
+        logger.info('Reading ' + fname)
         ste = obspy.read(fname)
     except Exception as e:
-        print(e)
-        print('Error while reading ' + fname)
+        logger.info(e)
+        logger.info('Error while reading ' + fname)
         return 0
     try:
         starttime = ste[0].stats.starttime
         endtime = ste[0].stats.endtime
     except Exception as e:
-        print(e)
-        print('Cannot determine start or endtime: ' + fname)
+        logger.debug(e)
+        logger.debug('Cannot determine start or endtime: ' + fname)
         return 0
     try:
         ste = ste.trim(starttime=starttime, endtime=endtime - 0.01)
     except Exception as e:
-        print(e)
-        print('Error in trimming ' + fname)
+        logger.debug(e)
+        logger.debug('Error in trimming ' + fname)
         return 0
     try:
         picks = pick_event(ste, triggering_stations, trigger['time'])
         if len(picks) > 0:
-            print(fname + ' picked:')
-            print(picks)
+            logger.debug(fname + ' picked')
+            logger.debug(picks)
         else:
-            print('No picks in ' + fname)
+            logger.debug('No picks in ' + fname)
             return 0
 #        q.put('#' + picks)
     except Exception as e:
-        print(e)
-        print('Error in picking ' + fname)
+        logger.debug(e)
+        logger.debug('Error in picking ' + fname)
         return 0
     try:
         if len(picks) > 300:
             plot_picks(picks, ste)
     except Exception as e:
-        print(e)
-        print('Error in plotting ' + fname)
+        logger.debug(e)
+        logger.debug('Error in plotting ' + fname)
         return 0
     return picks
 
@@ -207,7 +205,6 @@ def pick_event(ste, stations, time):
             scnl, picks, polarity, snr, uncert = Picker.picks(tr)
             if len(picks) > 0:
                 pickstring = '{:10.2f}'.format(time.timestamp) + ' ' + str(time) + ' ' + '{:8s}'.format(sta) + ' ' + str(picks[0]) + ' P ' + '{:5.0f}'.format(snr[0]) + '\n'
-#                print(pickstring)
                 output.write(pickstring)
         elif sta in accelerometers: # accelerometers
             got_pick = False
@@ -230,7 +227,6 @@ def pick_event(ste, stations, time):
                     picks = np.mean(picks)
                     snr = np.mean(snr)
                 pickstring = '{:10.2f}'.format(time.timestamp) + ' ' + str(time) + ' ' + '{:8s}'.format(sta) + ' ' + str(obspy.UTCDateTime(picks)) + ' P ' + '{:5.0f}'.format(snr) + '\n'
-#                print(pickstring)
                 output.write(pickstring)
     return output.getvalue()
 
@@ -253,9 +249,9 @@ def generate_hyp_input(df_picks, my_uuid):
     df_picks['eventid'] = df_picks['eventid'].replace(to_replace=eventid, value = np.arange(len(eventid)) + eventid_0)
 
     df_picks = df_picks.drop_duplicates(subset = ['eventid', 'station'], keep='first')
-    print(str(len(eventid)) + ' events will be written')    # need to log triggers to file
+    logger.debug(str(len(eventid)) + ' events will be written')    # need to log triggers to file
 
-    df_stations = pd.read_csv('stations_local_coordinates.txt', delimiter='\t')
+    df_stations = pd.read_csv('/home/sigmav/Vibbox_processing/stations_local_coordinates.txt', delimiter='\t')
     df_stations['station'] = df_stations['station'].str.rstrip()
     df_stations['z'] = -df_stations['z']
     mean_x0 = df_stations['x'].mean()
@@ -282,13 +278,13 @@ def generate_hyp_input(df_picks, my_uuid):
     events = df_picks['eventid'].unique()
 
     try:
-        shutil.copyfile('surf.crh', output_path + my_uuid + '/surf.crh')
-        shutil.copyfile('hypinst', output_path + my_uuid + '/hypinst')
-        shutil.copyfile('hyp1.40_ms', output_path + my_uuid + '/hyp1.40_ms')
-        shutil.copyfile('hyp_stations.dat', output_path + my_uuid + '/hyp_stations.dat')
+        shutil.copyfile('/home/sigmav/Vibbox_processing/surf.crh', output_path + my_uuid + '/surf.crh')
+        shutil.copyfile('/home/sigmav/Vibbox_processing/hypinst', output_path + my_uuid + '/hypinst')
+        shutil.copyfile('/home/sigmav/Vibbox_processing/hyp1.40_ms', output_path + my_uuid + '/hyp1.40_ms')
+        shutil.copyfile('/home/sigmav/Vibbox_processing/hyp_stations.dat', output_path + my_uuid + '/hyp_stations.dat')
     except Exception as e:
-        print(e)
-        print('Cannot write to output directory ' + output_path + my_uuid)
+        logger.info(e)
+        logger.info('Cannot write to output directory ' + output_path + my_uuid)
         return 0
     phasefile = open(fn_hypinput, 'wb')
     try_to_locate = False
@@ -354,7 +350,7 @@ def postprocess_hyp(my_uuid):
     df_loc['date_scaled'] = df_loc['date_scaled'].apply(obspy.UTCDateTime)
     df_loc['date'] = 0
 
-    df_stations = pd.read_csv('stations_local_coordinates.txt', delimiter='\t')
+    df_stations = pd.read_csv('/home/sigmav/Vibbox_processing/stations_local_coordinates.txt', delimiter='\t')
     df_stations['station'] = df_stations['station'].str.rstrip()
     df_stations['z'] = -df_stations['z']
     mean_x0 = df_stations['x'].mean()
@@ -389,43 +385,76 @@ def postprocess_hyp(my_uuid):
 
 def process_rawfile(file):
     if not is_rawfile(file):
-        return 0
+        return 'Finished processing file, not a raw file: ' + file
+    try:
+        with open(fn_recent) as f:
+             recent_files = f.read().splitlines()
+        if file in recent_files:
+             logger.debug('File was already processed: ' + file)
+             return 'Finished processing file, already processed: ' + file
+        else:
+             logger.debug('File not yet processed send ' + file)
+             recent_files.append(file)
+             if len(recent_files) > 100:
+                 recent_files = recent_files[1:]
+             with open(fn_recent, 'w') as f:
+                 for item in recent_files:
+                     f.write("%s\n" % item)
+    except Exception as e:
+        logger.debug(e)
+        logger.debug('Cannot determine if in recent files ', file_path)
+
     my_uuid = str(uuid.uuid4())
     try:
         os.makedirs(output_path + my_uuid)
     except Exception as e:
-        print(e)
-        print('Cannot write to output directory ', output_path + my_uuid)
+        logger.info(e)
+        logger.info('Cannot write to output directory ', output_path + my_uuid)
     df_triggers = process_file_trigger(file)
     filename = os.path.split(file)[-1]
     try:
-        shutil.move(file, os.path.join(options.ext_dir, filename))
+# this may cause issues with some file systems, use subprocess.call instead
+#        shutil.move(file, os.path.join(options.ext_dir, filename))
+        subprocess.call(['mv',file, os.path.join(options.ext_dir, filename)])
+        logger.info('Moved to external drive ' + os.path.join(options.ext_dir, filename))
     except Exception as e:
-        print(e)
-        print('Cannot move to external drive ' + os.path.join(options.ext_dir, filename))
-#    check_external_harddrives()
-    if len(df_triggers)>0:
-        df_triggers.to_csv(fn_triggers, mode='a', header=False, index=False)
-    colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
-    names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
-    df_picks = pd.DataFrame()
-    for index, trig in df_triggers.iterrows():
-        new_picks = process_file_pick(trig)
-        if new_picks != 0:
-            df_new_picks = pd.read_fwf(StringIO(new_picks), colspecs=colspecs, names=names)
-            df_picks = df_picks.append(df_new_picks)
-    df_events = pd.DataFrame()
-    if len(df_picks) > 0:
-        df_picks.to_csv(output_path + my_uuid + '/picks.csv', index=False)
-        df_picks.to_csv(fn_picks, header=False, index=False, mode='a')
-    # Compile scaled Hypoinverse input
-        try_to_locate = generate_hyp_input(df_picks, my_uuid)
-    # Run Hypoinverse
-        if try_to_locate:
-            run_hypoinverse(my_uuid)
-        # Postprocess hypoinverse
-            df_events = postprocess_hyp(my_uuid)
-            df_events.to_csv(fn_catalog, header=False, mode='a', index=False)
+        logger.info(e)
+        logger.info('Cannot move to external drive ' + os.path.join(options.ext_dir, filename))
+    try:
+        if len(df_triggers)>0:
+            df_triggers.to_csv(fn_triggers, mode='a', header=False, index=False)
+    except Exception as e:
+        logger.info(e)
+        logger.info('Cannot write triggers')
+    try:
+        colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
+        names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
+        df_picks = pd.DataFrame()
+        for index, trig in df_triggers.iterrows():
+            new_picks = process_file_pick(trig)
+            if new_picks != 0:
+                df_new_picks = pd.read_fwf(StringIO(new_picks), colspecs=colspecs, names=names)
+                df_picks = df_picks.append(df_new_picks)
+        df_events = pd.DataFrame()
+        if len(df_picks) > 0:
+            df_picks.to_csv(output_path + my_uuid + '/picks.csv', index=False)
+            df_picks.to_csv(fn_picks, header=False, index=False, mode='a')
+    except Exception as e:
+        logger.info(e)
+        logger.info('Error in processing picks')
+    try:
+        if len(df_picks) > 0:
+        # Compile scaled Hypoinverse input
+            try_to_locate = generate_hyp_input(df_picks, my_uuid)
+        # Run Hypoinverse
+            if try_to_locate:
+                run_hypoinverse(my_uuid)
+            # Postprocess hypoinverse
+                df_events = postprocess_hyp(my_uuid)
+                df_events.to_csv(fn_catalog, header=False, mode='a', index=False)
+    except Exception as e:
+        logger.info(e)
+        logger.info('Error during locating events')
     # cleanup
     try:
         if os.path.exists(output_path + my_uuid):
@@ -452,9 +481,6 @@ def processed_callback(summary):
 
 def main(options):
 
-    """Define processing logic and fire up the watcher"""
-    watch_dir = options.watch_dir
-    pool = multiprocessing.Pool(options.nthreads)
 
     def simply_process_rawfile(file_path):
         """
@@ -479,17 +505,25 @@ def main(options):
              [file_path],
              callback=processed_callback)
 
+    """Define processing logic and fire up the watcher"""
+    watch_dir = options.watch_dir
+    try:
+        pool = multiprocessing.Pool(options.nthreads)
 
-    handler = RsyncNewFileHandler(nthreads=options.nthreads,
-                                  file_predicate=is_rawfile,
-                                  #file_processor=simply_process_rawfile
-                                  file_processor=asynchronously_process_rawfile
-                                 )
-    wm = pyinotify.WatchManager()
-    notifier = pyinotify.Notifier(wm, handler)
-    wm.add_watch(options.watch_dir, handler.mask, rec=True)
-    log_preamble(options)
-    notifier.loop()
+        handler = RsyncNewFileHandler(nthreads=options.nthreads,
+                                      file_predicate=is_rawfile,
+                                      #file_processor=simply_process_rawfile
+                                      file_processor=asynchronously_process_rawfile
+                                     )
+        wm = pyinotify.WatchManager()
+        notifier = pyinotify.Notifier(wm, handler)
+        wm.add_watch(options.watch_dir, handler.mask, rec=True)
+        log_preamble(options)
+        notifier.loop()
+    finally:
+        pool.close()
+        pool.join()
+
     return 0
 
 def log_preamble(options):
@@ -497,6 +531,7 @@ def log_preamble(options):
     logger.info('Watching %s', options.watch_dir)
     logger.info('Output dir %s', options.output_dir)
     logger.info('Log dir %s', options.log_dir)
+    logger.info('External dir %s', options.ext_dir)
     logger.info("***********")
 
 def setup_logging(options):
@@ -514,11 +549,11 @@ def setup_logging(options):
     debug_formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s', date_fmt)
 
     info_logfile = logging.handlers.RotatingFileHandler(log_filename,
-                            maxBytes=5e5, backupCount=10)
+                            maxBytes=5e7, backupCount=10)
     info_logfile.setFormatter(std_formatter)
     info_logfile.setLevel(logging.INFO)
     debug_logfile = logging.handlers.RotatingFileHandler(log_filename + '.debug',
-                            maxBytes=5e5, backupCount=10)
+                            maxBytes=5e7, backupCount=10)
     debug_logfile.setFormatter(debug_formatter)
     debug_logfile.setLevel(logging.DEBUG)
 
@@ -532,10 +567,6 @@ def setup_logging(options):
     logger.addHandler(log_stream)
     logger.addHandler(debug_logfile)
 
-def check_external_harddrives(options):
-    from subprocess import call
-    call(['/home/sigmav/checkExtDisk', '/media', '95', 'options.ext_dir'])
-
 if __name__ == '__main__':
     output_path = options.output_dir + '/'
 
@@ -544,7 +575,8 @@ if __name__ == '__main__':
     fn_triggers = output_path + my_datestr + '_triggers' + '.csv'
     fn_picks = output_path + my_datestr + '_picks' + '.csv'
     fn_catalog = output_path + my_datestr + '_catalog' + '.csv'
-    fn_error = output_path + my_datestr + 'error' + '.csv'
+    fn_error = output_path + my_datestr + '_error' + '.txt'
+    fn_recent = output_path + my_datestr + '_recents' + '.txt'
 
     # make folders
     mseedpath = output_path + 'triggers/'
@@ -564,6 +596,9 @@ if __name__ == '__main__':
     f_triggers = open(fn_triggers, 'wb')
     f_triggers.write(header + '\n')
     f_triggers.close()
+
+    f_recent = open(fn_recent, 'wb')
+    f_recent.close()
 
     stations = ['PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12',
                 'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07', 'OT08', 'OT09', 'OT10', 'OT11', 'OT12',

@@ -14,17 +14,14 @@ import os
 import pandas as pd
 import obspy
 from StringIO import StringIO
-import vibbox as vibbox
-from phasepapy.phasepicker import aicdpicker
+from surf_seis import vibbox as vibbox
+from surf_seis.phasepapy.phasepicker import aicdpicker
 import sys
 from pyproj import Proj, transform
 import multiprocessing
 import logging, logging.handlers
-import optparse
 import shutil
-import time
 import pyinotify
-import atexit
 import uuid
 import subprocess
 
@@ -35,6 +32,7 @@ class options():
     watch_dir = "/data1/vbox/incoming/"
     log_dir = "/data1/vbox/log"
     output_dir = "/data1/vbox/output"
+    output_dir_trig = "/home/sigmav/sigmav_ext"
     ext_dir = "/home/sigmav/sigmav_ext"
 
     nthreads = 6
@@ -100,6 +98,8 @@ def process_file_trigger(fname):
         for index, ev in new_triggers.iterrows():
             ste = st.copy().trim(starttime = ev['time'] - 0.01,  endtime = ev['time'] + ev['duration'] + 0.01)
             outname = mseedpath + '{:10.2f}'.format(ev['time'].timestamp)  + '.mseed'
+            if not os.path.exists(mseedpath):
+                os.makedirs(mseedpath)
             ste.write(outname, format='mseed')
     except Exception as e:
         logger.info(e)
@@ -168,6 +168,36 @@ def process_file_pick(trigger):
         return 0
     return picks
 
+# def plot_picks(my_picks, st):
+#     colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
+#     names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
+#     my_picks = pd.read_fwf(StringIO(my_picks), colspecs=colspecs, names=names)
+#     my_picks['origin'] = my_picks['origin'].apply(obspy.UTCDateTime)
+#     my_picks['pick'] = my_picks['pick'].apply(obspy.UTCDateTime)
+# 
+#     num_picks= len(my_picks)
+#     starttime = st[0].stats.starttime
+#     dt = st[0].stats.delta
+#     fig, axs = plt.subplots(num_picks, 1, sharex=True)
+#     plt.suptitle('event ' + str(starttime), color='red')
+#     for ii in range(num_picks):
+#         station = my_picks['station'].iloc[ii]
+#         tr = st.select(station=station)
+#         axs[ii].plot(tr[0].data, c='k')
+#         axs[ii].hold(True)
+#         axs[ii].set_yticks([])
+#         ix = (my_picks['pick'].iloc[ii] - starttime) / dt
+#         axs[ii].axvline(x=ix, c=(1.0, 0.0, 0.0))
+#         ylim = axs[ii].get_ylim()
+#         axs[ii].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], station)
+#     fig.set_size_inches(10.5, 2*num_picks)
+#     plt.tight_layout(pad=0.0, h_pad=0.0)
+#     plt.savefig(pngpath + '{:10.2f}'.format(my_picks['eventid'].iloc[0]) + '.png')
+#     plt.close()
+#     plt.gcf().clear()
+#     plt.cla()
+#     plt.clf()
+
 def plot_picks(my_picks, st):
     colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
     names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
@@ -178,7 +208,7 @@ def plot_picks(my_picks, st):
     num_picks= len(my_picks)
     starttime = st[0].stats.starttime
     dt = st[0].stats.delta
-    fig, axs = plt.subplots(num_picks, 1, sharex=True)
+    fig, axs = plt.subplots(num_picks + 1, 1, sharex=True)
     plt.suptitle('event ' + str(starttime), color='red')
     for ii in range(num_picks):
         station = my_picks['station'].iloc[ii]
@@ -190,8 +220,15 @@ def plot_picks(my_picks, st):
         axs[ii].axvline(x=ix, c=(1.0, 0.0, 0.0))
         ylim = axs[ii].get_ylim()
         axs[ii].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], station)
-    fig.set_size_inches(10.5, 2*num_picks)
+    # plot CASSM signal
+    axs[ii+1].plot(st[60].data, c='k')
+    axs[ii+1].hold(True)
+    axs[ii+1].set_yticks([])
+    axs[ii+1].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], 'CASSM')
+    fig.set_size_inches(10.5, 2*(num_picks+1))
     plt.tight_layout(pad=0.0, h_pad=0.0)
+    if not os.path.exists(pngpath):
+        os.makedirs(pngpath)
     plt.savefig(pngpath + '{:10.2f}'.format(my_picks['eventid'].iloc[0]) + '.png')
     plt.close()
     plt.gcf().clear()
@@ -572,6 +609,7 @@ def setup_logging(options):
 
 if __name__ == '__main__':
     output_path = options.output_dir + '/'
+    output_path_trig = options.output_dir + '/'
 
     # output filenames
     my_datestr = obspy.UTCDateTime().strftime('%Y%m%d%H%M%S')
@@ -582,8 +620,8 @@ if __name__ == '__main__':
     fn_recent = output_path + my_datestr + '_recents' + '.txt'
 
     # make folders
-    mseedpath = output_path + 'triggers/'
-    pngpath = output_path + 'png/'
+    mseedpath = output_path_trig + 'triggers/'
+    pngpath = output_path_trig + 'png/'
     try:
         if not os.path.exists(output_path):
             os.makedirs(output_path)

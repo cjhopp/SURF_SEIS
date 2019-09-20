@@ -14,17 +14,14 @@ import os
 import pandas as pd
 import obspy
 from StringIO import StringIO
-import vibbox as vibbox
-from phasepapy.phasepicker import aicdpicker
+from surf_seis import vibbox as vibbox
+from surf_seis.phasepapy.phasepicker import aicdpicker
 import sys
 from pyproj import Proj, transform
 import multiprocessing
 import logging, logging.handlers
-import optparse
 import shutil
-import time
 import pyinotify
-import atexit
 import uuid
 import subprocess
 
@@ -35,6 +32,7 @@ class options():
     watch_dir = "/data1/vbox/incoming/"
     log_dir = "/data1/vbox/log"
     output_dir = "/data1/vbox/output"
+    output_dir = "/home/sigmav/sigmav_ext"
     ext_dir = "/home/sigmav/sigmav_ext"
 
     nthreads = 6
@@ -100,6 +98,8 @@ def process_file_trigger(fname):
         for index, ev in new_triggers.iterrows():
             ste = st.copy().trim(starttime = ev['time'] - 0.01,  endtime = ev['time'] + ev['duration'] + 0.01)
             outname = mseedpath + '{:10.2f}'.format(ev['time'].timestamp)  + '.mseed'
+            if not os.path.exists(mseedpath):
+                os.makedirs(mseedpath)
             ste.write(outname, format='mseed')
     except Exception as e:
         logger.info(e)
@@ -227,6 +227,8 @@ def plot_picks(my_picks, st):
     axs[ii+1].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], 'CASSM')
     fig.set_size_inches(10.5, 2*(num_picks+1))
     plt.tight_layout(pad=0.0, h_pad=0.0)
+    if not os.path.exists(pngpath):
+        os.makedirs(pngpath)
     plt.savefig(pngpath + '{:10.2f}'.format(my_picks['eventid'].iloc[0]) + '.png')
     plt.close()
     plt.gcf().clear()
@@ -234,7 +236,9 @@ def plot_picks(my_picks, st):
     plt.clf()
 
 def pick_event(ste, stations, time):
-    Picker = aicdpicker.AICDPicker(t_ma = 0.001, nsigma = 8, t_up = 0.01, nr_len = 0.002, nr_coeff = 2, pol_len = 100, pol_coeff = 5, uncert_coeff = 3)
+    Picker = aicdpicker.AICDPicker(t_ma = 0.001, nsigma = 8, t_up = 0.01,
+                                   nr_len = 0.002, nr_coeff = 2, pol_len = 100,
+                                   pol_coeff = 5, uncert_coeff = 3)
     output = StringIO()
     for sta in stations:
         if sta in hydrophones: # hydrophones

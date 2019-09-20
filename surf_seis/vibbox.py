@@ -199,10 +199,11 @@ def vibbox_read(fname):
     VOLTAGE_RANGE=10
     clock_channel = 63
     f = open(fname, "rb")
-
+    print(f)
     f.seek(HEADER_OFFSET, os.SEEK_SET)
     # read header
     H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
+    print(H)
     BUFFER_SIZE=H[0]
     FREQUENCY=H[1]
     NUM_OF_BUFFERS=H[2]
