@@ -211,8 +211,8 @@ def vibbox_read(fname):
     # read data
     f.seek(DATA_OFFSET, os.SEEK_SET)
     A = np.fromfile(f, dtype=np.int32, count = BUFFER_SIZE*NUM_OF_BUFFERS)
-    A = 2*VOLTAGE_RANGE*np.reshape(A, (len(A)/channels, channels)) - VOLTAGE_RANGE
-    A = A/4294967296.0
+    A = 2 * VOLTAGE_RANGE * np.reshape(A, (len(A) // channels, channels)) - VOLTAGE_RANGE
+    A = A / 4294967296.0
 
     # arrange it in an obspy stream
     tr = []
