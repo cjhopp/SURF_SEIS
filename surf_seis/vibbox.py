@@ -30,8 +30,8 @@ def vibbox_preprocess(st):
     
     # OT
     # align sign OT hydrophones
-    for ii in np.arange(16, 23):
-        st[ii].data = - st[ii].data
+#    for ii in np.arange(16, 23):
+#        st[ii].data = - st[ii].data
     ## De-Median OT hydrophones
     #temp = np.median((st[12].data, st[13].data, st[14].data, st[15].data, st[16].data, st[17].data, 
     #                  st[18].data, st[19].data, st[20].data, st[21].data, st[22].data), axis=0)
@@ -151,20 +151,7 @@ def vibbox_checktriggers(my_triggers, st):
             my_triggers = my_triggers.drop(ev_index)
     return(my_triggers)
 
-def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
-                   off=1, num=10):
-    """
-
-    :param st:
-    :param freqmin:
-    :param freqmax:
-    :param sta:
-    :param lta:
-    :param on:
-    :param off:
-    :param num:
-    :return:
-    """
+def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta = 0.01, lta = 0.05, on = 1.3, off = 1, num = 10):
     starttime = st[0].stats.starttime
     st = st[0:63] # throw out time signal
     cassm = st[61].copy().differentiate()
@@ -174,57 +161,37 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
     ids = map(lambda d: d.id, st)
     columns = ['time', 'duration'] + ids
     df_triggers = pd.DataFrame(columns=columns)
-    for t_dict in trig:
-        if 'SV.CTrig..' in t_dict['trace_ids']: # trow out CASSM shots
+    for ii in range(len(trig)):
+        if 'SV.CTrig..' in trig[ii]['trace_ids']: # trow out CASSM shots
             continue
-        # spurious triggers at beginning of file, should be done differently
-        if t_dict['duration'] > 0.1:
+        if trig[ii]['duration'] > 0.1: # spurious triggers at beginning of file, should be done differently
             continue
-        trig_sample = np.int((obspy.UTCDateTime(t_dict['time']) -
-                              starttime)*st[0].stats.sampling_rate)
-        # End sample of trigger
-        end_trig = trig_sample + np.int(t_dict['duration'] *
-                                        st[0].stats.sampling_rate)
+        trig_sample = np.int((obspy.UTCDateTime(trig[ii]['time']) - starttime)*st[0].stats.sampling_rate)
         # check if CASSM trigger fired
-        samp_start = trig_sample - 1000
-        samp_end = end_trig + 1000
-        if np.max(cassm.data[samp_start:samp_end]) > 10000:
+        if np.max(cassm.data[(trig_sample-1000):(1000+trig_sample+np.int(trig[ii]['duration']*st[0].stats.sampling_rate))]) > 10000:
             continue
-        current_trigger = {'time': t_dict['time'],
-                           'duration': t_dict['duration']}
-        for i, tr in enumerate(st):
-            while i < 60:
-                current_trigger[tr.id] = np.max(tr.data[trig_sample:end_trig])
+        current_trigger = {'time': trig[ii]['time'], 'duration': trig[ii]['duration']}
+        for jj in range(60):
+            current_trigger[st[jj].id] = np.max(st[jj].data[trig_sample:trig_sample+np.int(trig[ii]['duration']*st[0].stats.sampling_rate)])
         df_triggers = df_triggers.append(current_trigger, ignore_index=True)
     return df_triggers
 
 def vibbox_read(fname):
-    """
-
-    :param fname:
-    :return:
-    """
-    stations = ('PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07',
-                'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12', 'OT01', 'OT02',
-                'OT03', 'OT04', 'OT05', 'OT06', 'OT07', 'OT08', 'OT09', 'OT10',
-                'OT11', 'OT12', 'PDT1', 'PDT1', 'PDT1', 'PDB3', 'PDB3', 'PDB3',
-                'PDB4', 'PDB4', 'PDB4', 'PDB6', 'PDB6', 'PDB6', 'PSB7', 'PSB7',
-                'PSB7', 'PSB9', 'PSB9', 'PSB9', 'PST10', 'PST10', 'PST10',
-                'PST12', 'PST12', 'PST12', 'OB13', 'OB13', 'OB13', 'OB15',
-                'OB15', 'OB15', 'OT16', 'OT16', 'OT16', 'OT18', 'OT18', 'OT18',
-                'CMon', 'CTrig', 'CEnc', 'PPS')
+    stations = ('PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12', 
+                'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07', 'OT08', 'OT09', 'OT10', 'OT11', 'OT12', 
+                'PDT1', 'PDT1', 'PDT1', 'PDB3', 'PDB3', 'PDB3', 'PDB4', 'PDB4', 'PDB4', 'PDB6', 'PDB6', 'PDB6', 
+                'PSB7', 'PSB7', 'PSB7', 'PSB9', 'PSB9', 'PSB9', 'PST10', 'PST10', 'PST10', 'PST12', 'PST12', 'PST12', 
+                'OB13', 'OB13', 'OB13', 'OB15', 'OB15', 'OB15', 'OT16', 'OT16', 'OT16', 'OT18', 'OT18', 'OT18', 'CMon', 'CTrig', 'CEnc', 'PPS')
     location = ('', '', '', '', '', '', '', '', '', '', '', '', 
                 '', '', '', '', '', '', '', '', '', '', '', '', 
                 '', '', '', '', '', '', '', '', '', '', '', '', 
                 '', '', '', '', '', '', '', '', '', '', '', '', 
                 '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')
-    channel = ('XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
-               'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
-               'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XNZ', 'XNX', 'XNY',
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', '', '', '', '')
+    channel = ('XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 
+               'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',  
+               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 
+               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 
+               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', '', '', '', '')
     
     HEADER_SIZE=4
     HEADER_OFFSET=27
@@ -232,11 +199,10 @@ def vibbox_read(fname):
     VOLTAGE_RANGE=10
     clock_channel = 63
     f = open(fname, "rb")
-    print(f)
+
     f.seek(HEADER_OFFSET, os.SEEK_SET)
     # read header
     H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
-    print(H)
     BUFFER_SIZE=H[0]
     FREQUENCY=H[1]
     NUM_OF_BUFFERS=H[2]
@@ -244,36 +210,31 @@ def vibbox_read(fname):
     # read data
     f.seek(DATA_OFFSET, os.SEEK_SET)
     A = np.fromfile(f, dtype=np.int32, count = BUFFER_SIZE*NUM_OF_BUFFERS)
-    A = 2 * VOLTAGE_RANGE * np.reshape(A, (len(A) // channels,
-                                           channels)) - VOLTAGE_RANGE
-    A = A / 4294967296.0
+    A = 2*VOLTAGE_RANGE*np.reshape(A, (len(A)/channels, channels)) - VOLTAGE_RANGE
+    A = A/4294967296.0
+
     # arrange it in an obspy stream
     tr = []
     for s in range(channels):
-        tr.append(obspy.Trace(data=A[:, s]))
+        tr.append(obspy.Trace(data=A[:,s]))
     st = obspy.Stream(tr)
     path, fname = os.path.split(fname)
+
     try:
-        time_to_first_full_second = np.where(A[:, clock_channel]
-                                             > (2e7 / 2**31))[0][0] - 3
+        time_to_first_full_second = np.where(A[:,clock_channel]>(2e7/2**31))[0][0]-3
         if time_to_first_full_second > 101000:
             print('Cannot read time signal')
         # in case we start during the time pulse
         if time_to_first_full_second < 0:
-            time_to_first_full_second = np.where(A[50000:, clock_channel]
-                                                 > (2e7 / 2**31))[0][0] - 3
-        starttime = obspy.UTCDateTime(
-            np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
-            np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
-            np.int(1e6 * (1 - (np.float(time_to_first_full_second)
-                               / FREQUENCY))))
+            time_to_first_full_second = np.where(A[50000:,clock_channel]>(2e7/2**31))[0][0]-3
+            
+        starttime = obspy.UTCDateTime(np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]), np.int(fname[13:15]), 
+                                      np.int(fname[15:17]), np.int(fname[17:19]), np.int(1e6*(1 - (np.float(time_to_first_full_second)/FREQUENCY))))
     except Exception as e:
-        print('Cannot read time exact signal: {}.'.format(fname)
-              + 'Taking an approximate one instead')
-        starttime = obspy.UTCDateTime(
-            np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
-            np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
-            np.int(1e2 * np.int(fname[19:23])))
+        print('Cannot read time exact signal: ' + fname + '. Taking an approximate one instead')
+        starttime = obspy.UTCDateTime(np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]), np.int(fname[13:15]), 
+                                      np.int(fname[15:17]), np.int(fname[17:19]), np.int(1e2*np.int(fname[19:23])) )
+
     for ii in range(channels):
         st[ii].stats.network = 'SV'
         st[ii].stats.station = stations[ii]

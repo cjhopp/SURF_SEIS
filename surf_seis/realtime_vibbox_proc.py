@@ -14,14 +14,17 @@ import os
 import pandas as pd
 import obspy
 from StringIO import StringIO
-from surf_seis import vibbox as vibbox
-from surf_seis.phasepapy.phasepicker import aicdpicker
+import vibbox
+from phasepapy.phasepicker import aicdpicker
 import sys
 from pyproj import Proj, transform
 import multiprocessing
 import logging, logging.handlers
+import optparse
 import shutil
+import time
 import pyinotify
+import atexit
 import uuid
 import subprocess
 
@@ -609,7 +612,7 @@ def setup_logging(options):
 
 if __name__ == '__main__':
     output_path = options.output_dir + '/'
-    output_path_trig = options.output_dir + '/'
+    output_path_trig = options.output_dir_trig + '/'
 
     # output filenames
     my_datestr = obspy.UTCDateTime().strftime('%Y%m%d%H%M%S')
@@ -622,6 +625,7 @@ if __name__ == '__main__':
     # make folders
     mseedpath = output_path_trig + 'triggers/'
     pngpath = output_path_trig + 'png/'
+    print mseedpath
     try:
         if not os.path.exists(output_path):
             os.makedirs(output_path)
