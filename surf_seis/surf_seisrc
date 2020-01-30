@@ -1,13 +1,29 @@
-#!/usr/bin/python
-
 # Directory information
+[paths]
 watch_dir =
 log_dir =
 output_dir =
 trigger_dir =
 external_dir =
 
+[misc]
+# Threads for async
+nthreads = 6
+
 # Station information
+[instruments]
+network = SV
+stations = PDB01,PDB02,PDB03,PDB04,PDB05,PDB06,PDB07,
+    PDB08,PDB09,PDB10,PDB11,PDB12,OT01,OT02,OT03,
+    OT04,OT05,OT06,OT07,OT08,OT09,OT10,OT11,
+    OT12,PDT1,PDB3,PDB4,PDB6,PSB7,PSB9,PST10,
+    PST12,OB13,OB15,OT16,OT18
+hydrophones = PDB01, PDB02, PDB03, PDB04, PDB05, PDB06, PDB07,
+    PDB08, PDB09, PDB10, PDB11, PDB12, OT01, OT02,
+    OT03, OT04, OT05, OT06, OT07, OT08, OT09, OT10,
+    OT11, OT12
+accelerometers = PDT1, PDB3, PDB4, PDB6, PSB7, PSB9, PST10,
+    PST12, OB13, OB15, OT16, OT18
 
-
+[coordinates]
 # Coordinate system information
