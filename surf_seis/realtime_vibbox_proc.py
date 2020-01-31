@@ -19,8 +19,6 @@ import multiprocessing
 import numpy as np
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
-import matplotlib as mpl
-# mpl.use('Agg')
 import matplotlib.pyplot as plt
 from io import StringIO
 from configparser import ConfigParser
@@ -34,17 +32,6 @@ from surf_seis.vibbox import (vibbox_read, vibbox_preprocess, vibbox_trigger,
                               )
 
 logger = logging.getLogger()
-
-
-# class options():
-#     """Dummy class serving as a placeholder for argparse handling."""
-#     watch_dir = "/data1/vbox/incoming/"
-#     log_dir = "/data1/vbox/log"
-#     output_dir = "/data1/vbox/output"
-#     output_dir_trig = "/home/sigmav/sigmav_ext"
-#     ext_dir = "/home/sigmav/sigmav_ext"
-#
-#     nthreads = 6
 
 
 class RsyncNewFileHandler(pyinotify.ProcessEvent):
@@ -116,8 +103,7 @@ class SURF_SEIS():
         # Build directory tree if needed
         self.mseedpath = os.path.join(self.trigger_dir, 'triggers')
         self.pngpath = os.path.join(self.trigger_dir, 'png')
-        for pth in [self.output_dir, self.mseedpath, self.pngpath,
-                    self.tmp_path]:
+        for pth in [self.output_dir, self.mseedpath, self.pngpath]:
             if not os.path.exists(pth):
                 os.makedirs(pth)
         # Start trigger/recents file
@@ -130,6 +116,13 @@ class SURF_SEIS():
             f_triggers.write(header)
         with open(self.fn_recent, 'w') as f_recent:
             f_recent.close()
+        # Copy over the hypoinverse files to the tmp directory
+        try:
+            shutil.copytree(self.hypoinv_path, self.tmp_path)
+        except Exception as e:
+            logger.info(e)
+            logger.info('Cannot write {} to tmp directory'.format(
+                self.hypoinv_path, self.tmp_path))
 
     def process_file_trigger(self, fname):
         try:
@@ -328,8 +321,6 @@ class SURF_SEIS():
         eventid_0 = 1
         min_picks = 5
         only_accelerometers = False
-        colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
-        names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
         df_picks['origin'] = df_picks['origin'].apply(obspy.UTCDateTime)
         df_picks['pick'] = df_picks['pick'].apply(obspy.UTCDateTime)
         df_picks = df_picks[df_picks['station'] != 'CTrig']
@@ -365,7 +356,8 @@ class SURF_SEIS():
                                           mean_y0) * 1e6 + northing_0
         # scale by a factor of 1000 (stay with km units)
         # station elevations with positive is up
-        df_stations['depth_scaled'] = (df_stations['z'] - max_z0) * 1e3 + depth_0
+        df_stations['depth_scaled'] = (df_stations['z'] -
+                                       max_z0) * 1e3 + depth_0
         df_stations['lon_scaled'], df_stations['lat_scaled'] = transform(
             proj_utm13N, proj_WGS84, df_stations['easting_scaled'].values,
             df_stations['northing_scaled'].values
@@ -377,13 +369,6 @@ class SURF_SEIS():
         df_stations['lat_min'] = abs(df_stations['lat_scaled'] -
                                      df_stations['lat_deg']) * 60
         events = df_picks['eventid'].unique()
-        try:
-            shutil.copytree(self.hypoinv_path, self.tmp_path)
-        except Exception as e:
-            logger.info(e)
-            logger.info('Cannot write {} to tmp directory'.format(
-                self.hypoinv_path, self.tmp_path))
-            return 0
         phasefile = open(fn_hypinput, 'w')
         try_to_locate = False
         for ev in events:
@@ -399,12 +384,14 @@ class SURF_SEIS():
             phasefile.write(
                 '{}{:d}{:2.0f} {:4.0f}{:3d} {:4.0f} {:4.0f}{:3.0f}{:107d}\n'.format(
                     origin_time.strftime('%Y%m%d%H%M%S'),
-                    origin_time.microsecond / 1e4, origin_station.lat_scaled,
-                    (origin_station.lat_scaled - origin_station.lat_scaled) * 6000.,
-                    abs(origin_station.lon_scaled),
+                    int(origin_time.microsecond / 1e4),
+                    float(origin_station.lat_scaled),
+                    float(origin_station.lat_scaled -
+                          int(origin_station.lat_scaled)) * 6000.,
+                    int(abs(origin_station.lon_scaled)),
                     abs(float(origin_station.lon_scaled -
-                              int(origin_station.lon_scaled)) * 6000),
-                    origin_station.depth_scaled * -100., 0., np.int(ev)
+                              int(origin_station.lon_scaled)) * 6000.),
+                    float(origin_station.depth_scaled) * -100., 0., np.int(ev)
                     )
             )
             # phasefile.write(
@@ -428,8 +415,8 @@ class SURF_SEIS():
                 picktime_scaled = pick['pick'] + traveltime_scaled
                 if pick['phase'] == 'P':
                     phasefile.write(
-                        '{:5s}{:>9}P 0{:04d}{:02d}{:02d}{:02d}{:02d}{:5.0f}{:>7}{:>5}{:>4}\n'.format(
-                            pick.station, picktime_scaled.year, self.network,
+                        '{:5s}{:<9}P 0{:04d}{:02d}{:02d}{:02d}{:02d}{:5.0f}{:>7}{:>5}{:>4}\n'.format(
+                            pick.station, self.network, picktime_scaled.year,
                             picktime_scaled.month, picktime_scaled.day,
                             picktime_scaled.hour, picktime_scaled.minute,
                             (picktime_scaled.second +
@@ -443,7 +430,7 @@ class SURF_SEIS():
                     #                  '{:5.0f}'.format((picktime_scaled.second + picktime_scaled.microsecond/1e6) * 100) + '   0101    0   0' + '\n')
                 if pick['phase'] == 'S':
                     phasefile.write(
-                        '{:5s}{:>9}  4{:04d}{:02d}{:02d}{:02d}{:02d}   0   0  0 {:5.0f} S 2\n'.format(
+                        '{:5s}{:<9}  4{:04d}{:02d}{:02d}{:02d}{:02d}   0   0  0 {:5.0f} S 2\n'.format(
                             pick.station, picktime_scaled.year, self.network,
                             picktime_scaled.month, picktime_scaled.day,
                             picktime_scaled.hour, picktime_scaled.minute,
@@ -580,15 +567,21 @@ class SURF_SEIS():
             for index, trig in df_triggers.iterrows():
                 new_picks = self.process_file_pick(trig)
                 if new_picks != 0:
-                    df_new_picks = pd.read_fwf(
-                        StringIO(new_picks), colspecs=colspecs, names=names)
+                    df_new_picks = pd.read_fwf(StringIO(new_picks),
+                                               colspecs=colspecs, names=names)
                     df_picks = df_picks.append(df_new_picks)
             df_events = pd.DataFrame()
             if len(df_picks) > 0:
-                df_picks.to_csv(os.path.join(self.tmp_path, 'picks.csv'),
-                                             index=False)
-                df_picks.to_csv(self.fn_picks, header=False, index=False,
-                                mode='a')
+                print('In writing loop')
+                print(os.getcwd())
+                # One for hypoinverse, one for posterity
+                print(os.path.abspath(os.path.join(self.tmp_path, 'picks.csv')))
+                df_picks.to_csv(os.path.abspath(os.path.join(self.tmp_path,
+                                                             'picks.csv')),
+                                index=False,
+                                mode='w')
+                df_picks.to_csv(os.path.abspath(self.fn_picks), header=False,
+                                index=False, mode='w')
         except Exception as e:
             logger.info(e)
             logger.info('Error in processing picks')
@@ -607,11 +600,11 @@ class SURF_SEIS():
             logger.info(e)
             logger.info('Error during locating events')
         # cleanup
-        try:
-            if os.path.exists(self.tmp_path):
-                shutil.rmtree(self.tmp_path)
-        except:
-            sys.exit('Cannot clean temp directory {}'.format(self.tmp_path))
+        # try:
+        #     if os.path.exists(self.tmp_path):
+        #         shutil.rmtree(self.tmp_path)
+        # except:
+        #     sys.exit('Cannot clean temp directory {}'.format(self.tmp_path))
         return 'Finished processing file {}.\n{} triggers found\n{} events located'.format(
             file, len(df_triggers), len(df_events))
 
