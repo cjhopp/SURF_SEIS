@@ -115,66 +115,82 @@ def vibbox_custom_filter(st):
         
     return(st)
 
+
 def vibbox_checktriggers(my_triggers, st):
-# declare dead time after each trigger
+    # declare dead time after each trigger
     deadtime = 0
     for ev_index, ev in my_triggers.iterrows():
         if ev.time > deadtime:
             deadtime = ev.time + ev.duration
         else:
             my_triggers = my_triggers.drop(ev_index)
-
-    ids = map(lambda d: d.id, st)
-
-# remove electrical spikes and ERT cross talk
+    ids = list(map(lambda d: d.id, st))
+    # remove electrical spikes and ERT cross talk
     for ev_index, ev in my_triggers.iterrows():
-        ste = st.copy().trim(starttime = ev['time'] - 0.001,  endtime = ev['time'] + ev['duration'] + 0.001)
-#        cassm = ste[61].copy()
-#        cassm.differentiate()
-#        if np.max(cassm.data) > 1e10:
-#            my_triggers = my_triggers.drop(ev_index)
-#            continue
-    # select triggering components
-        max_sample = ev[ev>1.3]
-    # find peak during trigger
-        for sta_index,sta in max_sample.iteritems():
+        ste = st.copy().trim(starttime=ev['time'] - 0.001,
+                             endtime = ev['time'] + ev['duration'] + 0.001)
+        # select triggering components
+        max_sample = ev[ev > 1.3]
+        # find peak during trigger
+        for sta_index, sta in max_sample.items():
             if sta_index in ids:
-                max_sample[sta_index] = np.argmax(np.abs(ste.select(id = sta_index)[0].data))
+                max_sample[sta_index] = np.argmax(
+                    np.abs(ste.select(id=sta_index)[0].data)
+                )
             else:
                 max_sample = max_sample.drop(sta_index)
-    # determine label for trigger
+        # determine label for trigger
         max_sample = max_sample.sort_values()
         unique_values = np.unique(np.ceil(max_sample.astype(float).values/3.0))
-    # real events should have their maxima at any station not closer than 3 samples for more than 20% of triggering traces
+        # real events should have their maxima at any station not closer
+        # than 3 samples for more than 20% of triggering traces
         label = (np.float(len(unique_values)) / np.float(len(max_sample))) > 0.8
         if not label:
             my_triggers = my_triggers.drop(ev_index)
     return(my_triggers)
 
-def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta = 0.01, lta = 0.05, on = 1.3, off = 1, num = 10):
+
+def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
+                   off=1, num=10):
     starttime = st[0].stats.starttime
     st = st[0:63] # throw out time signal
     cassm = st[61].copy().differentiate()
     st.filter('bandpass', freqmin=freqmin, freqmax=freqmax)
-    trig = coincidence_trigger("recstalta", on,  off, st, num, sta=sta, lta=lta)
+    trigs = coincidence_trigger("recstalta", on,  off, st, num,
+                                sta=sta, lta=lta
+                                )
     st.trigger('recstalta', sta=sta, lta=lta)
-    ids = map(lambda d: d.id, st)
+    ids = list(map(lambda d: d.id, st))
     columns = ['time', 'duration'] + ids
     df_triggers = pd.DataFrame(columns=columns)
-    for ii in range(len(trig)):
-        if 'SV.CTrig..' in trig[ii]['trace_ids']: # trow out CASSM shots
+    for trig in trigs:
+        # trow out CASSM shots
+        if 'SV.CTrig..' in trig['trace_ids']:
             continue
-        if trig[ii]['duration'] > 0.1: # spurious triggers at beginning of file, should be done differently
+        # spurious triggers at beginning of file, should be done differently
+        if trig['duration'] > 0.1:
             continue
-        trig_sample = np.int((obspy.UTCDateTime(trig[ii]['time']) - starttime)*st[0].stats.sampling_rate)
+        trig_sample = np.int((obspy.UTCDateTime(trig['time']) -
+                              starttime) * st[0].stats.sampling_rate
+                             )
         # check if CASSM trigger fired
-        if np.max(cassm.data[(trig_sample-1000):(1000+trig_sample+np.int(trig[ii]['duration']*st[0].stats.sampling_rate))]) > 10000:
+        if np.max(cassm.data[(trig_sample - 1000):(1000 + trig_sample +
+                                                   np.int(trig['duration'] *
+                                                   st[0].stats.sampling_rate))]
+                  ) > 10000:
             continue
-        current_trigger = {'time': trig[ii]['time'], 'duration': trig[ii]['duration']}
-        for jj in range(60):
-            current_trigger[st[jj].id] = np.max(st[jj].data[trig_sample:trig_sample+np.int(trig[ii]['duration']*st[0].stats.sampling_rate)])
+        current_trigger = {'time': trig['time'], 'duration': trig['duration']}
+        for i, tr in enumerate(st):
+            if i >= 60:
+                continue
+            current_trigger[tr.id] = np.max(
+                tr.data[trig_sample:trig_sample +
+                                    np.int(trig['duration'] *
+                                           st[0].stats.sampling_rate)]
+            )
         df_triggers = df_triggers.append(current_trigger, ignore_index=True)
     return df_triggers
+
 
 def vibbox_read(fname):
     stations = ('PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12', 
@@ -209,17 +225,16 @@ def vibbox_read(fname):
     channels=H[3]
     # read data
     f.seek(DATA_OFFSET, os.SEEK_SET)
-    A = np.fromfile(f, dtype=np.int32, count = BUFFER_SIZE*NUM_OF_BUFFERS)
-    A = 2*VOLTAGE_RANGE*np.reshape(A, (len(A)/channels, channels)) - VOLTAGE_RANGE
-    A = A/4294967296.0
-
+    A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE*NUM_OF_BUFFERS)
+    A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / channels),
+                                           channels)) - VOLTAGE_RANGE
+    A = A / 4294967296.0
     # arrange it in an obspy stream
     tr = []
     for s in range(channels):
         tr.append(obspy.Trace(data=A[:,s]))
     st = obspy.Stream(tr)
     path, fname = os.path.split(fname)
-
     try:
         time_to_first_full_second = np.where(A[:,clock_channel]>(2e7/2**31))[0][0]-3
         if time_to_first_full_second > 101000:

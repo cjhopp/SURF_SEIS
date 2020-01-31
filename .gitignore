@@ -1,6 +1,9 @@
 *.pyc
+*.iml
 **/*.egg-info
 **/*.csv
 **/*.mat
+**/*.dat
 .*
+/venv/*
 !/.gitignore

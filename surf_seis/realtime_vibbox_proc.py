@@ -13,25 +13,25 @@ import uuid
 import obspy
 import shutil
 import logging
+import logging.handlers
 import subprocess
 import multiprocessing
 import numpy as np
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 import matplotlib as mpl
-mpl.use('Agg')
+# mpl.use('Agg')
 import matplotlib.pyplot as plt
-
+from io import StringIO
 from configparser import ConfigParser
-from StringIO import StringIO
 
 import pyinotify
-from phasepapy.phasepicker import aicdpicker
+from surf_seis.phasepapy.phasepicker import aicdpicker
 from pyproj import Proj, transform
 
-from .vibbox import (vibbox_read, vibbox_preprocess, vibbox_trigger,
-    vibbox_checktriggers, vibbox_custom_filter
-                     )
+from surf_seis.vibbox import (vibbox_read, vibbox_preprocess, vibbox_trigger,
+                              vibbox_checktriggers, vibbox_custom_filter
+                              )
 
 logger = logging.getLogger()
 
@@ -79,13 +79,16 @@ class RsyncNewFileHandler(pyinotify.ProcessEvent):
 
 class SURF_SEIS():
     def __init__(self, config):
+        # Setup directories
         self.watch_dir = config.get('paths', 'watch_dir').strip()
         self.log_dir = config.get('paths', 'log_dir').strip()
         self.output_dir = config.get('paths', 'output_dir').strip()
         self.trigger_dir = config.get('paths', 'trigger_dir').strip()
         self.external_dir = config.get('paths', 'external_dir').strip()
+        self.hypoinv_path = config.get('plugins', 'hypinv_path').strip()
+        self.tmp_path = os.path.join(self.output_dir, str(uuid.uuid4()))
         self.network = config.get('instruments', 'network').strip()
-        self.nthreads = config.get('misc', 'nthreads').strip()
+        self.nthreads = int(config.get('misc', 'nthreads').strip())
         self.stations = [s.strip() for s in
                          config.get('instruments', 'stations').split(',')]
         self.hydrophones = [s.strip() for s in
@@ -103,16 +106,18 @@ class SURF_SEIS():
                                       for chan in ['XNZ', 'XNX', 'XNY']])
         # Output filenames
         my_datestr = obspy.UTCDateTime().strftime('%Y%m%d%H%M%S')
-        out_root = '/'.join(self.output_dir, my_datestr)
-        self.fn_triggers = '{}_triggers.csv'.format(out_root)
+        out_root = os.path.join(self.output_dir, my_datestr)
+        trig_root = os.path.join(self.trigger_dir, my_datestr)
+        self.fn_triggers = '{}_triggers.csv'.format(trig_root)
         self.fn_picks = '{}_picks.csv'.format(out_root)
         self.fn_catalog = '{}_catalog.csv'.format(out_root)
         self.fn_error = '{}_error.txt'.format(out_root)
         self.fn_recent = '{}_recents.txt'.format(out_root)
         # Build directory tree if needed
-        self.mseedpath = '/'.join([self.trigger_dir, 'triggers/'])
-        self.pngpath = '/'.join([self.trigger_dir, 'png/'])
-        for pth in [self.output_dir, self.mseedpath, self.pngpath]:
+        self.mseedpath = os.path.join(self.trigger_dir, 'triggers')
+        self.pngpath = os.path.join(self.trigger_dir, 'png')
+        for pth in [self.output_dir, self.mseedpath, self.pngpath,
+                    self.tmp_path]:
             if not os.path.exists(pth):
                 os.makedirs(pth)
         # Start trigger/recents file
@@ -147,6 +152,7 @@ class SURF_SEIS():
         except Exception as e:
             logger.debug(e)
             logger.debug('Error in triggering {}'.format(fname))
+            print('Returning zero here')
             return 0
         try:
             st = vibbox_custom_filter(st)
@@ -157,9 +163,10 @@ class SURF_SEIS():
             for index, ev in new_triggers.iterrows():
                 ste = st.copy().trim(starttime=ev['time'] - 0.01,
                                      endtime=ev['time'] + ev['duration'] + 0.01)
-                outname = '{}{:10.2f}.mseed'.format(self.mseedpath, ev['time'].timestamp)
-                if not os.path.exists(self.mseedpath):
-                    os.makedirs(self.mseedpath)
+                outname = os.path.join(
+                    self.mseedpath,
+                    '{:10.2f}.mseed'.format(ev['time'].timestamp)
+                )
                 ste.write(outname, format='mseed')
         except Exception as e:
             logger.info(e)
@@ -169,7 +176,7 @@ class SURF_SEIS():
 
 
     def process_file_pick(self, trigger):
-        # calculate trigger strength on Accelerometers and skip picking if its small
+        # Calculate trigger strength on Accelerometers and dont pick if small
         trigger_strength = np.prod(trigger[26:62])
         if trigger_strength < 10000:
             return 0
@@ -184,7 +191,9 @@ class SURF_SEIS():
                     triggering_stations.append(my_station)
         if np.sum(trig_at_station[24:]) <= 4:
             return 0
-        fname = '{}{:10.2f}.mseed'.format(self.mseedpath, trigger['time'].timestamp)
+        fname = os.path.join(
+            self.mseedpath, '{:10.2f}.mseed'.format(trigger['time'].timestamp)
+        )
         try:
             logger.info('Reading {}'.format(fname))
             ste = obspy.read(fname)
@@ -249,7 +258,6 @@ class SURF_SEIS():
             station = my_picks['station'].iloc[ii]
             tr = st.select(station=station)
             axs[ii].plot(tr[0].data, c='k')
-            axs[ii].hold(True)
             axs[ii].set_yticks([])
             ix = (my_picks['pick'].iloc[ii] - starttime) / dt
             axs[ii].axvline(x=ix, c=(1.0, 0.0, 0.0))
@@ -257,13 +265,13 @@ class SURF_SEIS():
             axs[ii].text(0, (ylim[1] - ylim[0])* 0.9 + ylim[0], station)
         # plot CASSM signal
         axs[-1].plot(st[60].data, c='k', label='CASSM')
-        axs[-1].hold(True)
         axs[-1].set_yticks([])
         axs[-1].legend()
         fig.set_size_inches(10.5, 2 * (num_picks + 1))
         plt.tight_layout(pad=0.0, h_pad=0.0)
-        plt.savefig('{}{:10.2f}.png'.format(self.pngpath,
-                                            my_picks['eventid'].iloc[0]))
+        plt.savefig(os.path.join(
+            self.pngpath, '{:10.2f}.png'.format(my_picks['eventid'].iloc[0]))
+        )
         plt.close()
         plt.gcf().clear()
         plt.cla()
@@ -313,9 +321,9 @@ class SURF_SEIS():
         return output.getvalue()
 
 
-    def generate_hyp_input(self, df_picks, my_uuid):
+    def generate_hyp_input(self, df_picks):
         # output for hypoinverse
-        fn_hypinput = self.output_path + my_uuid + '/' + 'hyp_input.dat'
+        fn_hypinput = os.path.join(self.tmp_path, 'hyp_input.dat')
         # set to 1 for new catalog or larger to continue catalog
         eventid_0 = 1
         min_picks = 5
@@ -336,7 +344,7 @@ class SURF_SEIS():
         # need to log triggers to file
         logger.debug(str(len(eventid)) + ' events will be written')
         df_stations = pd.read_csv(
-            '/home/sigmav/Vibbox_processing/stations_local_coordinates.txt',
+            os.path.join(self.hypoinv_path, 'stations_local_coordinates.txt'),
             delimiter='\t'
         )
         df_stations['station'] = df_stations['station'].str.rstrip()
@@ -369,20 +377,12 @@ class SURF_SEIS():
         df_stations['lat_min'] = abs(df_stations['lat_scaled'] -
                                      df_stations['lat_deg']) * 60
         events = df_picks['eventid'].unique()
-        # TODO These paths in config file too
         try:
-            full_out_path = '{}{}'.format(self.output_path, my_uuid)
-            shutil.copyfile('/home/sigmav/Vibbox_processing/surf.crh',
-                            '{}/surf.crh'.format(full_out_path))
-            shutil.copyfile('/home/sigmav/Vibbox_processing/hypinst',
-                            '{}/hypinst'.format(full_out_path))
-            shutil.copyfile('/home/sigmav/Vibbox_processing/hyp1.40_ms',
-                            '{}/hyp1.40_ms'.format(full_out_path))
-            shutil.copyfile('/home/sigmav/Vibbox_processing/hyp_stations.dat',
-                            '{}/hyp_stations.dat'.format(full_out_path))
+            shutil.copytree(self.hypoinv_path, self.tmp_path)
         except Exception as e:
             logger.info(e)
-            logger.info('Cannot write to output directory {}'.format(full_out_path))
+            logger.info('Cannot write {} to tmp directory'.format(
+                self.hypoinv_path, self.tmp_path))
             return 0
         phasefile = open(fn_hypinput, 'w')
         try_to_locate = False
@@ -456,23 +456,21 @@ class SURF_SEIS():
                     #                 '{:04d}'.format(picktime_scaled.year) + '{:02d}'.format(picktime_scaled.month) + '{:02d}'.format(picktime_scaled.day) +
                     #                  '{:02d}'.format(picktime_scaled.hour) + '{:02d}'.format(picktime_scaled.minute) +
                     #                  '   0   0  0 ' + '{:5.0f}'.format((picktime_scaled.second + picktime_scaled.microsecond/1e6) * 100) + ' S 2\n')
-            # TODO This is 64 blanks
             phasefile.write('{:>64}{:6d}\n'.format('', np.int(ev)))
         phasefile.close()
         return try_to_locate
 
 
-    def run_hypoinverse(self, my_uuid):
+    def run_hypoinverse(self):
         from subprocess import call
         root_dir = os.getcwd()
-        os.chdir(self.output_path + my_uuid)
+        os.chdir(self.tmp_path)
         call('./hyp1.40_ms')
         os.chdir(root_dir)
 
 
-    def postprocess_hyp(self, my_uuid):
-        infile = self.output_path + my_uuid + '/hyp_output.csv'
-        # output = output_path + my_uuid + '/catalog.csv'
+    def postprocess_hyp(self):
+        infile = os.path.join(self.tmp_path, 'hyp_output.csv')
         colspecs = [(0, 24), (24, 31), (32, 42), (43, 48),
                     (48, 62), (62, 64), (65, 68), (69, 74),
                     (75, 81), (82, 87), (88, 92), (93, 95), (97, 108)]
@@ -485,8 +483,11 @@ class SURF_SEIS():
             return 0
         df_loc['date_scaled'] = df_loc['date_scaled'].apply(obspy.UTCDateTime)
         df_loc['date'] = 0
+        # TODO Work to be done to gernalize this...
+        # TODO Require some info from user in config, others (like staiton...
+        # TODO ...locations) in separate files with hard-coded names?
         df_stations = pd.read_csv(
-            '/home/sigmav/Vibbox_processing/stations_local_coordinates.txt',
+            os.path.join(self.hypoinv_path, 'stations_local_coordinates.txt'),
             delimiter='\t'
         )
         df_stations['station'] = df_stations['station'].str.rstrip()
@@ -494,7 +495,6 @@ class SURF_SEIS():
         mean_x0 = df_stations['x'].mean()
         mean_y0 = df_stations['y'].mean()
         max_z0 = df_stations['z'].max()
-        # TODO In the config file
         # UTM 13T 598445 4912167
         proj_WGS84 = Proj(init='epsg:4326') # WGS-84
         proj_utm13N = Proj(init='epsg:32613') # UTM 13N
@@ -511,7 +511,7 @@ class SURF_SEIS():
                        1e6 + mean_y0) * 1000
         df_loc['z'] = ((df_loc['depth_scaled'] - depth_0) /
                        1000 - max_z0) * 1000
-        df_picks = pd.read_csv(self.output_path + my_uuid + '/picks.csv')
+        df_picks = pd.read_csv(os.path.join(self.tmp_path, 'picks.csv'))
         df_picks['origin'] = df_picks['origin'].apply(obspy.UTCDateTime)
         df_picks['pick'] = df_picks['pick'].apply(obspy.UTCDateTime)
         df_picks = df_picks[df_picks['station'] != 'CTrig']
@@ -540,7 +540,7 @@ class SURF_SEIS():
                  recent_files = f.read().splitlines()
             if file in recent_files:
                  logger.debug('File was already processed: {}'.format(file))
-                 return 'Finished processing file, already processed: {}'.format(file)
+                 return 'File {} already processed'.format(file)
             else:
                  logger.debug('File not yet processed send '.format(file))
                  recent_files.append(file)
@@ -552,26 +552,19 @@ class SURF_SEIS():
         except Exception as e:
             logger.debug(e)
             logger.debug('Cannot determine if in recent files '.format(file))
-
-        my_uuid = str(uuid.uuid4())
-        try:
-            os.makedirs(self.output_path + my_uuid)
-        except Exception as e:
-            logger.info(e)
-            logger.info('Cannot write to output directory '.format(
-                self.output_path, my_uuid))
         df_triggers = self.process_file_trigger(file)
         filename = os.path.split(file)[-1]
         try:
-            # this may cause issues with file systems, use subprocess.call instead
-            # shutil.move(file, os.path.join(options.ext_dir, filename))
-            subprocess.call(['mv', file, os.path.join(self.ext_dir, filename)])
+            # this may cause issues with file systems, use subprocess.call
+            # instead shutil.move(file, os.path.join(options.ext_dir, filename))
+            subprocess.call(['mv', file,
+                             os.path.join(self.external_dir, filename)])
             logger.info('Moved to external drive {}'.format(
-                os.path.join(self.ext_dir, filename)))
+                os.path.join(self.external_dir, filename)))
         except Exception as e:
             logger.info(e)
             logger.info('Cannot move to external drive '.format(
-                os.path.join(self.ext_dir, filename)))
+                os.path.join(self.external_dir, filename)))
         try:
             if len(df_triggers) > 0:
                 df_triggers.to_csv(self.fn_triggers, mode='a', header=False,
@@ -580,7 +573,8 @@ class SURF_SEIS():
             logger.info(e)
             logger.info('Cannot write triggers')
         try:
-            colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
+            colspecs = [(0, 14), (14, 42), (42, 51),
+                        (51, 79), (79, 80), (80, 87)]
             names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
             df_picks = pd.DataFrame()
             for index, trig in df_triggers.iterrows():
@@ -591,20 +585,22 @@ class SURF_SEIS():
                     df_picks = df_picks.append(df_new_picks)
             df_events = pd.DataFrame()
             if len(df_picks) > 0:
-                df_picks.to_csv(self.output_path + my_uuid + '/picks.csv', index=False)
-                df_picks.to_csv(self.fn_picks, header=False, index=False, mode='a')
+                df_picks.to_csv(os.path.join(self.tmp_path, 'picks.csv'),
+                                             index=False)
+                df_picks.to_csv(self.fn_picks, header=False, index=False,
+                                mode='a')
         except Exception as e:
             logger.info(e)
             logger.info('Error in processing picks')
         try:
             if len(df_picks) > 0:
                 # Compile scaled Hypoinverse input
-                try_to_locate = self.generate_hyp_input(df_picks, my_uuid)
+                try_to_locate = self.generate_hyp_input(df_picks)
                 # Run Hypoinverse
                 if try_to_locate:
-                    self.run_hypoinverse(my_uuid)
+                    self.run_hypoinverse()
                     # Postprocess hypoinverse
-                    df_events = self.postprocess_hyp(my_uuid)
+                    df_events = self.postprocess_hyp()
                     df_events.to_csv(self.fn_catalog, header=False,
                                      mode='a', index=False)
         except Exception as e:
@@ -612,18 +608,17 @@ class SURF_SEIS():
             logger.info('Error during locating events')
         # cleanup
         try:
-            if os.path.exists(self.output_path + my_uuid):
-                shutil.rmtree(self.output_path + my_uuid)
+            if os.path.exists(self.tmp_path):
+                shutil.rmtree(self.tmp_path)
         except:
-            sys.exit('Cannot clean temp directory {}{}'.format(
-                self.output_path, my_uuid))
-        return 'Finished processing file {}.\n {} triggers found\n {} events located'.format(
+            sys.exit('Cannot clean temp directory {}'.format(self.tmp_path))
+        return 'Finished processing file {}.\n{} triggers found\n{} events located'.format(
             file, len(df_triggers), len(df_events))
 
 
     def is_rawfile(self, filename):
         """Predicate function for identifying incoming AMI data"""
-        if '.dat' in filename:
+        if filename.endswith('.dat'):
             return True
         return False
 
@@ -643,7 +638,7 @@ class SURF_SEIS():
         logger.info('Watching {}'.format(self.watch_dir))
         logger.info('Output dir {}'.format(self.output_dir))
         logger.info('Log dir {}'.format(self.log_dir))
-        logger.info('External dir {}'.format(self.ext_dir))
+        logger.info('External dir {}'.format(self.external_dir))
         logger.info("***********")
 
 
@@ -687,7 +682,7 @@ class SURF_SEIS():
         :return:
         """
         pool = multiprocessing.Pool(self.nthreads)
-        def simply_process_rawfile(self, file_path):
+        def simply_process_rawfile(file_path):
             """
             Wraps `process_rawfile` to take a single argument (file_path).
 
@@ -698,7 +693,7 @@ class SURF_SEIS():
             summary = self.process_rawfile(file_path)
             self.processed_callback(summary)
 
-        def asynchronously_process_rawfile(self, file_path):
+        def asynchronously_process_rawfile(file_path):
             """
             Wraps `process_rawfile` to take a single argument (file_path).
 
@@ -706,14 +701,18 @@ class SURF_SEIS():
             This provides parallel processing, at the cost of being harder to
             debug if anything goes wrong (see notes on exception catching above)
             """
+
             pool.apply_async(self.process_rawfile, [file_path],
                              callback=self.processed_callback)
-
+        if self.nthreads > 1:
+            func = asynchronously_process_rawfile
+        else:
+            func = simply_process_rawfile
         # Now set the whole thing in motion
         try:
             handler = RsyncNewFileHandler(
                 file_predicate=self.is_rawfile,
-                file_processor=asynchronously_process_rawfile
+                file_processor=func
             )
             wm = pyinotify.WatchManager()
             notifier = pyinotify.Notifier(wm, handler)

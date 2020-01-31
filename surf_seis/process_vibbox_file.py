@@ -211,7 +211,7 @@ def generate_hyp_input(df_picks):
     df_picks = df_picks.drop_duplicates(subset = ['eventid', 'station'], keep='first')
     print(str(len(eventid)) + ' events will be written')    # need to log triggers to file
 
-    df_stations = pd.read_csv('stations_local_coordinates.txt', delimiter='\t')
+    df_stations = pd.read_csv('plugins/hypoinverse/stations_local_coordinates.txt', delimiter='\t')
     df_stations['station'] = df_stations['station'].str.rstrip()
     df_stations['z'] = -df_stations['z']
     mean_x0 = df_stations['x'].mean()
@@ -238,10 +238,10 @@ def generate_hyp_input(df_picks):
     events = df_picks['eventid'].unique()
 
     try:
-        shutil.copy('surf.crh', output_path + my_uuid)
-        shutil.copy('hypinst', output_path + my_uuid)
-        shutil.copy('hyp1.40_ms', output_path + my_uuid)
-        shutil.copy('hyp_stations.dat', output_path + my_uuid)
+        shutil.copy('plugins/hypoinverse/surf.crh', output_path + my_uuid)
+        shutil.copy('plugins/hypoinverse/hypinst', output_path + my_uuid)
+        shutil.copy('plugins/hypoinverse/hyp1.40_ms', output_path + my_uuid)
+        shutil.copy('plugins/hypoinverse/hyp_stations.dat', output_path + my_uuid)
     except:
         sys.exit('Cannot write to output directory ', output_path)
     phasefile = open(fn_hypinput, 'wb')
@@ -312,7 +312,7 @@ def postprocess_hyp():
     df_loc['date_scaled'] = df_loc['date_scaled'].apply(obspy.UTCDateTime)
     df_loc['date'] = 0
 
-    df_stations = pd.read_csv('stations_local_coordinates.txt', delimiter='\t')
+    df_stations = pd.read_csv('plugins/hypoinverse/stations_local_coordinates.txt', delimiter='\t')
     df_stations['station'] = df_stations['station'].str.rstrip()
     df_stations['z'] = -df_stations['z']
     mean_x0 = df_stations['x'].mean()

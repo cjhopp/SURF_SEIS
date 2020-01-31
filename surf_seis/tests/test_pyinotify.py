@@ -2,9 +2,9 @@ import pyinotify
 
 class EventHandler(pyinotify.ProcessEvent):
     def process_IN_CLOSE_NOWRITE(self, event):
-        print "File was closed without writing: " + event.pathname
+        print("File was closed without writing: " + event.pathname)
     def process_IN_CLOSE_WRITE(self, event):
-        print "File was closed with writing: " + event.pathname
+        print("File was closed with writing: " + event.pathname)
 
 def watch(filename):
     wm = pyinotify.WatchManager()
