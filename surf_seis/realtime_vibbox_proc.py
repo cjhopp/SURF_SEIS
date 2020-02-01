@@ -74,6 +74,14 @@ class SURF_SEIS():
         self.external_dir = config.get('paths', 'external_dir').strip()
         self.hypoinv_path = config.get('plugins', 'hypinv_path').strip()
         self.tmp_path = os.path.join(self.output_dir, str(uuid.uuid4()))
+        # Coordinate reference system
+        self.input_crs = int(config.get('coordinates', 'input_crs').rstrip())
+        self.crs_origin_easting = int(config.get(
+            'coordinates', 'crs_origin_easting').rstrip())
+        self.crs_origin_northing = int(config.get(
+            'coordinates', 'crs_origin_northing').rstrip())
+        self.crs_origin_depth = int(config.get(
+            'coordinates', 'crs_origin_depth').rstrip())
         self.network = config.get('instruments', 'network').strip()
         self.nthreads = int(config.get('misc', 'nthreads').strip())
         self.stations = [s.strip() for s in
@@ -238,7 +246,8 @@ class SURF_SEIS():
         """
         colspecs = [(0, 14), (14, 42), (42, 51), (51, 79), (79, 80), (80, 87)]
         names = ['eventid', 'origin', 'station', 'pick', 'phase', 'snr']
-        my_picks = pd.read_fwf(StringIO(my_picks), colspecs=colspecs, names=names)
+        my_picks = pd.read_fwf(StringIO(my_picks), colspecs=colspecs,
+                               names=names)
         my_picks['origin'] = my_picks['origin'].apply(obspy.UTCDateTime)
         my_picks['pick'] = my_picks['pick'].apply(obspy.UTCDateTime)
 
@@ -343,12 +352,11 @@ class SURF_SEIS():
         mean_x0 = df_stations['x'].mean()
         mean_y0 = df_stations['y'].mean()
         max_z0 = df_stations['z'].max()
-        # TODO These need to go in a config file
-        proj_WGS84 = Proj(init='epsg:4326') # WGS-84
-        proj_utm13N = Proj(init='epsg:32613') # UTM 13N
-        easting_0 = 598445
-        northing_0 = 4912167
-        depth_0 = 0
+        proj_WGS84 = Proj('epsg:4326') # Hard code WGS-84
+        proj_input = Proj('epsg:{}'.format(self.input_crs))
+        easting_0 = self.crs_origin_easting
+        northing_0 = self.crs_origin_northing
+        depth_0 = self.crs_origin_depth
         # scale by a factor of 1000 (and from km to m)
         df_stations['easting_scaled'] = (df_stations['x'] -
                                          mean_x0) * 1e6 + easting_0
@@ -359,7 +367,7 @@ class SURF_SEIS():
         df_stations['depth_scaled'] = (df_stations['z'] -
                                        max_z0) * 1e3 + depth_0
         df_stations['lon_scaled'], df_stations['lat_scaled'] = transform(
-            proj_utm13N, proj_WGS84, df_stations['easting_scaled'].values,
+            proj_input, proj_WGS84, df_stations['easting_scaled'].values,
             df_stations['northing_scaled'].values
         )
         df_stations['lon_deg'] = np.ceil(df_stations['lon_scaled'])
@@ -394,21 +402,6 @@ class SURF_SEIS():
                     float(origin_station.depth_scaled) * -100., 0., np.int(ev)
                     )
             )
-            # phasefile.write(
-                        # '{:4d}'.format(origin_time.year) +
-                        # '{:02d}'.format(origin_time.month) +
-                        # '{:02d}'.format(origin_time.day) +
-                        # '{:02d}'.format(origin_time.hour) +
-                        # '{:02d}'.format(origin_time.minute) +
-                        # '{:02d}'.format(origin_time.second) +
-                        # '{:02d}'.format(int(origin_time.microsecond / 1e4))  +
-                        # '{:2.0f}'.format(float(origin_station.lat_scaled)) + ' ' +
-                        # '{:4.0f}'.format(float(origin_station.lat_scaled - int(origin_station.lat_scaled)) * 6000) +
-                        # '{:3d}'.format(int(abs(origin_station.lon_scaled))) + ' ' +
-                        # '{:4.0f}'.format(abs(float(origin_station.lon_scaled - int(origin_station.lon_scaled)) * 6000)) + ' ' +
-                        # '{:4.0f}'.format(float(origin_station.depth_scaled) * -100) +
-                        # '{:3.0f}'.format(float(0)) +
-                        # '{:107d}'.format(np.int(ev)) + '\n')
             # phase lines
             for index, pick in picks.iterrows():
                 traveltime_scaled = (pick['pick'] - origin_time) * 1000
@@ -421,13 +414,9 @@ class SURF_SEIS():
                             picktime_scaled.hour, picktime_scaled.minute,
                             (picktime_scaled.second +
                              picktime_scaled.microsecond / 1e6) * 100,
-                            '101', '0', '0'
+                            '0101', '0', '0'
                         )
                     )
-                    # phasefile.write('{:5s}'.format(pick.station) + 'SV       P 0' +
-                    #                 '{:04d}'.format(picktime_scaled.year) + '{:02d}'.format(picktime_scaled.month) + '{:02d}'.format(picktime_scaled.day) +
-                    #                  '{:02d}'.format(picktime_scaled.hour) + '{:02d}'.format(picktime_scaled.minute) +
-                    #                  '{:5.0f}'.format((picktime_scaled.second + picktime_scaled.microsecond/1e6) * 100) + '   0101    0   0' + '\n')
                 if pick['phase'] == 'S':
                     phasefile.write(
                         '{:5s}{:<9}  4{:04d}{:02d}{:02d}{:02d}{:02d}   0   0  0 {:5.0f} S 2\n'.format(
@@ -436,13 +425,9 @@ class SURF_SEIS():
                             picktime_scaled.hour, picktime_scaled.minute,
                             (picktime_scaled.second +
                              picktime_scaled.microsecond / 1e6) * 100,
-                            '101', '0', '0'
+                            '0101', '0', '0'
                         )
                     )
-                    # phasefile.write('{:5s}'.format(pick.station_compact) + 'SV         4' +
-                    #                 '{:04d}'.format(picktime_scaled.year) + '{:02d}'.format(picktime_scaled.month) + '{:02d}'.format(picktime_scaled.day) +
-                    #                  '{:02d}'.format(picktime_scaled.hour) + '{:02d}'.format(picktime_scaled.minute) +
-                    #                  '   0   0  0 ' + '{:5.0f}'.format((picktime_scaled.second + picktime_scaled.microsecond/1e6) * 100) + ' S 2\n')
             phasefile.write('{:>64}{:6d}\n'.format('', np.int(ev)))
         phasefile.close()
         return try_to_locate
@@ -466,7 +451,7 @@ class SURF_SEIS():
                  'rms', 'erh', 'erz', 'qasr', 'eventid']
         df_loc = pd.read_fwf(infile, colspecs=colspecs, names=names, skiprows=1)
         # check if any events have been located
-        if len(df_loc)==0:
+        if len(df_loc) == 0:
             return 0
         df_loc['date_scaled'] = df_loc['date_scaled'].apply(obspy.UTCDateTime)
         df_loc['date'] = 0
@@ -483,13 +468,13 @@ class SURF_SEIS():
         mean_y0 = df_stations['y'].mean()
         max_z0 = df_stations['z'].max()
         # UTM 13T 598445 4912167
-        proj_WGS84 = Proj(init='epsg:4326') # WGS-84
-        proj_utm13N = Proj(init='epsg:32613') # UTM 13N
-        easting_0 = 598445
-        northing_0 = 4912167
-        depth_0 = 0
+        proj_WGS84 = Proj('epsg:4326') # Hard code WGS-84
+        proj_input = Proj('epsg:{}'.format(self.input_crs))
+        easting_0 = self.crs_origin_easting
+        northing_0 = self.crs_origin_northing
+        depth_0 = self.crs_origin_depth
         df_loc['easting_scaled'], df_loc['northing_scaled'] = transform(
-            proj_WGS84, proj_utm13N, df_loc['lon_scaled'].values,
+            proj_WGS84, proj_input, df_loc['lon_scaled'].values,
             df_loc['lat_scaled'].values
         )
         df_loc['x'] = ((df_loc['easting_scaled'] - easting_0) /

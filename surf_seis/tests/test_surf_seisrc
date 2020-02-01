@@ -8,7 +8,7 @@ external_dir = surf_seis/tests/tmp/out
 
 [misc]
 # Threads for async
-nthreads = 1
+nthreads = 2
 
 # Station information
 [instruments]
@@ -27,6 +27,11 @@ accelerometers = PDT1, PDB3, PDB4, PDB6, PSB7, PSB9, PST10,
 
 [coordinates]
 # Coordinate system information
+# Will be converted to lat lon using pyproj
+input_crs = 32613
+crs_origin_easting = 598445
+crs_origin_northing = 4912167
+crs_origin_depth = 0
 
 [plugins]
 # Hypoinverse paths
