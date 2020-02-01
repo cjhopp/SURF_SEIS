@@ -75,7 +75,7 @@ class SURF_SEIS():
         self.hypoinv_path = config.get('plugins', 'hypinv_path').strip()
         self.tmp_path = os.path.join(self.output_dir, str(uuid.uuid4()))
         # Coordinate reference system
-        self.input_crs = int(config.get('coordinates', 'input_crs').rstrip())
+        self.input_crs = config.get('coordinates', 'input_crs').rstrip()
         self.crs_origin_easting = int(config.get(
             'coordinates', 'crs_origin_easting').rstrip())
         self.crs_origin_northing = int(config.get(
@@ -352,8 +352,8 @@ class SURF_SEIS():
         mean_x0 = df_stations['x'].mean()
         mean_y0 = df_stations['y'].mean()
         max_z0 = df_stations['z'].max()
-        proj_WGS84 = Proj('epsg:4326') # Hard code WGS-84
-        proj_input = Proj('epsg:{}'.format(self.input_crs))
+        proj_WGS84 = Proj(init='epsg:4326') # Hard code WGS-84
+        proj_input = Proj(init='epsg:{}'.format(self.input_crs))
         easting_0 = self.crs_origin_easting
         northing_0 = self.crs_origin_northing
         depth_0 = self.crs_origin_depth
@@ -557,10 +557,7 @@ class SURF_SEIS():
                     df_picks = df_picks.append(df_new_picks)
             df_events = pd.DataFrame()
             if len(df_picks) > 0:
-                print('In writing loop')
-                print(os.getcwd())
                 # One for hypoinverse, one for posterity
-                print(os.path.abspath(os.path.join(self.tmp_path, 'picks.csv')))
                 df_picks.to_csv(os.path.abspath(os.path.join(self.tmp_path,
                                                              'picks.csv')),
                                 index=False,
