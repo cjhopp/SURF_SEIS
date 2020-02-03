@@ -24,7 +24,8 @@ from io import StringIO
 from configparser import ConfigParser
 
 import pyinotify
-from surf_seis.phasepapy.phasepicker import aicdpicker
+# from surf_seis.phasepapy.phasepicker import aicdpicker
+from phasepapy.phasepicker import aicdpicker
 from pyproj import Proj, transform
 
 from surf_seis.vibbox import (vibbox_read, vibbox_preprocess, vibbox_trigger,
