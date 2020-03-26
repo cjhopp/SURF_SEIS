@@ -94,13 +94,15 @@ Acquisition:
                          10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
                          10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
                          10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
-                         10000, 10000, 10000, 10000]
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]
   asdf_settings:
-    save_mV           : False             # save_mV = true uses float32 and results in much larger asdf file sizes
+    # save_mV = true uses float32 and results in much larger asdf file sizes
+    save_mV           : False
     data_folder       : 'raw/'
     data_folder_tmp   : 'raw/tmp_'
-    compression       : 'gzip-3'          # default: 'gzip-3', 'gzip-0' to 'gzip-9' or None
-    file_length_sec   : 30.0              # in seconds
+    # default: 'gzip-3', 'gzip-0' to 'gzip-9' or None
+    compression       : 'gzip-3'
+    file_length_sec   : 30.0
     station_naming    : ['PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06',
                          'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12',
                          'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07',

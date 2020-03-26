@@ -153,7 +153,7 @@ def vibbox_checktriggers(my_triggers, st):
 def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
                    off=1, num=10):
     starttime = st[0].stats.starttime
-    st = st[0:63] # throw out time signal
+    st = st[0:63]  # throw out time signal
     cassm = st[61].copy().differentiate()
     st.filter('bandpass', freqmin=freqmin, freqmax=freqmax)
     trigs = coincidence_trigger("recstalta", on,  off, st, num,
@@ -196,24 +196,29 @@ def vibbox_read(fname, param):
     stations = param['Acquisition']['asdf_settings']['station_naming']
     location = ['' for i in range(len(stations))]
     channel = param['Acquisition']['asdf_settings']['channel_naming']
+    # Find channel PPS (pulse per second)
+    try:
+        clock_channel = np.where(np.array(channel) == 'PPS')[0][0]
+    except IndexError:
+        print('No PPS channel in file. Not reading')
+        return
     # TODO Everything from here to file open should go in config
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
     VOLTAGE_RANGE=10
-    clock_channel = 63
-    f = open(fname, "rb")
-
-    f.seek(HEADER_OFFSET, os.SEEK_SET)
-    # read header
-    H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
-    BUFFER_SIZE=H[0]
-    FREQUENCY=H[1]
-    NUM_OF_BUFFERS=H[2]
-    channels=H[3]
-    # read data
-    f.seek(DATA_OFFSET, os.SEEK_SET)
-    A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE*NUM_OF_BUFFERS)
+    # clock_channel = 63
+    with open(fname, "rb") as f:
+        f.seek(HEADER_OFFSET, os.SEEK_SET)
+        # read header
+        H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
+        BUFFER_SIZE=H[0]
+        FREQUENCY=H[1]
+        NUM_OF_BUFFERS=H[2]
+        channels=H[3]
+        # read data
+        f.seek(DATA_OFFSET, os.SEEK_SET)
+        A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE*NUM_OF_BUFFERS)
     A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / channels),
                                            channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
