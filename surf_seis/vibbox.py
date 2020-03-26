@@ -236,6 +236,7 @@ def vibbox_read(fname, param):
         if time_to_first_full_second < 0:
             time_to_first_full_second = np.where(A[50000:, clock_channel] >
                                                  (2e7 / 2**31))[0][0]-3
+        print(time_to_first_full_second)
         print(np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
                                FREQUENCY))))
         starttime = obspy.UTCDateTime(
