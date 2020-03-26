@@ -111,6 +111,14 @@ Acquisition:
                          'PST12', 'PST12', 'OB13', 'OB13', 'OB13', 'OB15',
                          'OB15', 'OB15', 'OT16', 'OT16', 'OT16', 'OT18', 'OT18',
                          'OT18']
+    channel_naming    : ['XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX',
+                         'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ',
+                         'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
+                         'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX',
+                         'XNY', 'XNZ', 'XNX', 'XNY', '', '', '', '']
 
 Trigger:
   asdf_folder        : 'raw'

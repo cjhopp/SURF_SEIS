@@ -14,6 +14,7 @@ General:
   operator           : ['M. Schoenball','C. Hopp']
   sensor_count       : 64
   sensor_coords      : [
+# TODO This shit is redundant as hell. Should include dict, not lists.
 # in local coordinate system; x=East, y=North, z=elevation
 # Accelerometers (3x chans each)
 2579324.461294,1247590.3884,488.9207,

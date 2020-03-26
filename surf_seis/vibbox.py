@@ -196,6 +196,7 @@ def vibbox_read(fname, param):
     stations = param['Acquisition']['asdf_settings']['station_naming']
     location = ['' for i in range(len(stations))]
     channel = param['Acquisition']['asdf_settings']['channel_naming']
+    # TODO Everything from here to file open should go in config
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
@@ -244,7 +245,7 @@ def vibbox_read(fname, param):
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
             np.int(1e2 * np.int(fname[19:23])))
     for ii in range(channels):
-        st[ii].stats.network = 'SV'
+        st[ii].stats.network = param['General']['stats']['network']
         st[ii].stats.station = stations[ii]
         st[ii].stats.location = location[ii]
         st[ii].stats.channel = channel[ii]
