@@ -199,6 +199,7 @@ def vibbox_read(fname, param):
     # Find channel PPS (pulse per second)
     try:
         clock_channel = np.where(np.array(stations) == 'PPS')[0][0]
+        print(clock_channel)
     except IndexError:
         print('No PPS channel in file. Not reading')
         return
