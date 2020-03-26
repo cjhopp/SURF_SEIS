@@ -193,9 +193,9 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
 
 
 def vibbox_read(fname, param):
-    stations = param['Acquisition']['asdf_setting']['station_naming']
+    stations = param['Acquisition']['asdf_settings']['station_naming']
     location = ['' for i in range(len(stations))]
-    channel = param['Acquisition']['asdf_setting']['channel_naming']
+    channel = param['Acquisition']['asdf_settings']['channel_naming']
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
