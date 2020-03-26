@@ -199,7 +199,6 @@ def vibbox_read(fname, param):
     # Find channel PPS (pulse per second)
     try:
         clock_channel = np.where(np.array(stations) == 'PPS')[0][0]
-        print(clock_channel)
     except IndexError:
         print('No PPS channel in file. Not reading')
         return
@@ -216,7 +215,6 @@ def vibbox_read(fname, param):
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
         channels=H[3]
-        print(channels)
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
         A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE * NUM_OF_BUFFERS)
@@ -244,6 +242,7 @@ def vibbox_read(fname, param):
             np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
                                FREQUENCY))))
     except Exception as e:
+        print(e)
         print('Cannot read time exact signal: ' + fname +
               '. Taking an approximate one instead')
         starttime = obspy.UTCDateTime(
