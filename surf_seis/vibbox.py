@@ -208,7 +208,6 @@ def vibbox_read(fname, param):
     HEADER_OFFSET=27
     DATA_OFFSET=148
     VOLTAGE_RANGE=10
-    # clock_channel = 63
     with open(fname, "rb") as f:
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
@@ -217,9 +216,10 @@ def vibbox_read(fname, param):
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
         channels=H[3]
+        print(channels)
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
-        A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE*NUM_OF_BUFFERS)
+        A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE * NUM_OF_BUFFERS)
     A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / channels),
                                            channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
