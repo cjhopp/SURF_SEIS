@@ -192,23 +192,10 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
     return df_triggers
 
 
-def vibbox_read(fname):
-    stations = ('PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06', 'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12', 
-                'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07', 'OT08', 'OT09', 'OT10', 'OT11', 'OT12', 
-                'PDT1', 'PDT1', 'PDT1', 'PDB3', 'PDB3', 'PDB3', 'PDB4', 'PDB4', 'PDB4', 'PDB6', 'PDB6', 'PDB6', 
-                'PSB7', 'PSB7', 'PSB7', 'PSB9', 'PSB9', 'PSB9', 'PST10', 'PST10', 'PST10', 'PST12', 'PST12', 'PST12', 
-                'OB13', 'OB13', 'OB13', 'OB15', 'OB15', 'OB15', 'OT16', 'OT16', 'OT16', 'OT18', 'OT18', 'OT18', 'CMon', 'CTrig', 'CEnc', 'PPS')
-    location = ('', '', '', '', '', '', '', '', '', '', '', '', 
-                '', '', '', '', '', '', '', '', '', '', '', '', 
-                '', '', '', '', '', '', '', '', '', '', '', '', 
-                '', '', '', '', '', '', '', '', '', '', '', '', 
-                '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')
-    channel = ('XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 
-               'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',  
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 
-               'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', '', '', '', '')
-    
+def vibbox_read(fname, param):
+    stations = param['Acquisition']['asdf_setting']['station_naming']
+    location = ['' for i in range(len(stations))]
+    channel = param['Acquisition']['asdf_setting']['channel_naming']
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
@@ -232,24 +219,30 @@ def vibbox_read(fname):
     # arrange it in an obspy stream
     tr = []
     for s in range(channels):
-        tr.append(obspy.Trace(data=A[:,s]))
+        tr.append(obspy.Trace(data=A[:, s]))
     st = obspy.Stream(tr)
     path, fname = os.path.split(fname)
     try:
-        time_to_first_full_second = np.where(A[:,clock_channel]>(2e7/2**31))[0][0]-3
+        time_to_first_full_second = np.where(A[:, clock_channel] >
+                                             (2e7 / 2**31))[0][0]-3
         if time_to_first_full_second > 101000:
             print('Cannot read time signal')
         # in case we start during the time pulse
         if time_to_first_full_second < 0:
-            time_to_first_full_second = np.where(A[50000:,clock_channel]>(2e7/2**31))[0][0]-3
-            
-        starttime = obspy.UTCDateTime(np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]), np.int(fname[13:15]), 
-                                      np.int(fname[15:17]), np.int(fname[17:19]), np.int(1e6*(1 - (np.float(time_to_first_full_second)/FREQUENCY))))
+            time_to_first_full_second = np.where(A[50000:, clock_channel] >
+                                                 (2e7 / 2**31))[0][0]-3
+        starttime = obspy.UTCDateTime(
+            np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
+            np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
+            np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
+                               FREQUENCY))))
     except Exception as e:
-        print('Cannot read time exact signal: ' + fname + '. Taking an approximate one instead')
-        starttime = obspy.UTCDateTime(np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]), np.int(fname[13:15]), 
-                                      np.int(fname[15:17]), np.int(fname[17:19]), np.int(1e2*np.int(fname[19:23])) )
-
+        print('Cannot read time exact signal: ' + fname +
+              '. Taking an approximate one instead')
+        starttime = obspy.UTCDateTime(
+            np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
+            np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
+            np.int(1e2 * np.int(fname[19:23])))
     for ii in range(channels):
         st[ii].stats.network = 'SV'
         st[ii].stats.station = stations[ii]

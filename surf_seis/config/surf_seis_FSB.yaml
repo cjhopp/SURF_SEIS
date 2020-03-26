@@ -1,0 +1,204 @@
+# DUG-Seis parameter file
+#
+# :copyright:
+#    ETH Zurich, Switzerland
+# :license:
+#    GNU Lesser General Public License, Version 3
+#    (https://www.gnu.org/copyleft/lesser.html)
+#
+
+
+General:
+  project_name       : FS-B
+  project_location   : Mont Terri, CH
+  operator           : ['M. Schoenball','C. Hopp']
+  sensor_count       : 64
+  sensor_coords      : [
+# in local coordinate system; x=East, y=North, z=elevation
+# Accelerometers (3x chans each)
+2579324.461294,1247590.3884,488.9207,
+2579324.461294,1247590.3884,488.9207,
+2579324.461294,1247590.3884,488.9207,
+2579324.127923,1247564.5962,458.3487,
+2579324.127923,1247564.5962,458.3487,
+2579324.127923,1247564.5962,458.3487,
+2579329.86015,1247595.4255,488.2790,
+2579329.86015,1247595.4255,488.2790,
+2579329.86015,1247595.4255,488.2790,
+2579335.9162,1247574.0129,455.0401,
+2579335.9162,1247574.0129,455.0401,
+2579335.9162,1247574.0129,455.0401,
+2579328.42237,1247584.2444,500.6040,
+2579328.42237,1247584.2444,500.6040,
+2579328.42237,1247584.2444,500.6040,
+2579321.582,1247563.2318,478.8632,
+2579321.582,1247563.2318,478.8632,
+2579321.582,1247563.2318,478.8632,
+2579334.79024,1247589.14718,501.6884,
+2579334.79024,1247589.14718,501.6884,
+2579334.79024,1247589.14718,501.6884,
+2579337.27833,1247570.6516,476.9351,
+2579337.27833,1247570.6516,476.9351,
+2579337.27833,1247570.6516,476.9351,
+2579340.15296,1247593.54974,503.0410,
+2579340.15296,1247593.54974,503.0410,
+2579340.15296,1247593.54974,503.0410,
+2579351.2349,1247579.5168,477.7178,
+2579351.2349,1247579.5168,477.7178,
+2579351.2349,1247579.5168,477.7178,
+# Hydrophones
+2579324.496867,1247592.9675,491.9781,
+2579324.451961,1247589.7436,488.1565,
+2579324.405486,1247586.5206,484.3342,
+2579324.365244,1247583.3001,480.5097,
+2579324.324412,1247580.0796,476.6852,
+2579324.304438,1247578.4679,474.7741,
+2579324.286077,1247576.8557,472.8636,
+2579324.267101,1247575.2429,470.9534,
+2579324.22945,1247572.0169,467.1336,
+2579324.185952,1247568.7916,463.3131,
+2579324.14131,1247565.5641,459.4946,
+2579324.091171,1247562.3397,455.6735,
+2579324.032701,1247559.1223,451.8467,
+2579329.17688,1247597.8316,492.0198,
+2579329.93608,1247595.1581,487.8633,
+2579330.69621,1247592.4842,483.7073,
+2579331.45355,1247589.8114,479.5501,
+2579332.20912,1247587.1386,475.3925,
+2579332.58727,1247585.8011,473.3145,
+2579332.96631,1247584.4626,471.2373,
+2579333.34493,1247583.1243,469.1600,
+2579334.09847,1247580.4462,465.0054,
+2579334.85297,1247577.7667,460.8520,
+2579335.6125,1247575.0857,456.7004,
+2579336.3728,1247572.4026,452.5504,
+2579337.1362,1247569.7158,448.4033,
+# Chans 57, 58, 59, 60 are CASSM triggers
+0, 0, 0,
+0, 0, 0,
+0, 0, 0,
+0, 0, 0,
+# AE sensors (B84, B86, B94, B96)
+2579328.04796,1247573.7583,484.4205,
+2579327.67112,1247571.0884,481.4660,
+2579332.85762,1247580.2557,472.4704,
+2579333.26661,1247578.0125,469.1840
+]
+
+  active_trigger_channel : 1
+  origin_east            : 598420.3842806489
+  origin_north           : 4912272.275375654
+  origin_ch1903_east     : 579300.0  # ch1903 easting origin of local coordinate system
+  origin_ch1903_north    : 247500.0 # ch1903 northing of local coordinate system
+  origin_elev            : 500.0    # elevation of origin of local coordinate system
+  stats:
+    network           : 'MT'
+
+Acquisition:
+  hardware_settings:
+    sampling_frequency: 200000            # in Hz
+    gain_selection    : [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+                         10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]
+  asdf_settings:
+    save_mV           : False             # save_mV = true uses float32 and results in much larger asdf file sizes
+    data_folder       : 'raw/'
+    data_folder_tmp   : 'raw/tmp_'
+    compression       : 'gzip-3'          # default: 'gzip-3', 'gzip-0' to 'gzip-9' or None
+    file_length_sec   : 30.0              # in seconds
+    station_naming    : ['B31', 'B31', 'B31', 'B32', 'B32', 'B32', 'B42', 'B42',
+                         'B42', 'B43', 'B43', 'B43', 'B551', 'B551', 'B551',
+                         'B585', 'B585', 'B585', 'B647', 'B647', 'B647', 'B659',
+                         'B659', 'B659', 'B748', 'B748', 'B748', 'B75', 'B75',
+                         'B75', 'B301', 'B303', 'B305', 'B307', 'B309', 'B310',
+                         'B311', 'B312', 'B314', 'B316', 'B318', 'B320', 'B322',
+                         'B401', 'B403', 'B405', 'B407', 'B409', 'B410', 'B411',
+                         'B412', 'B414', 'B416', 'B418', 'B420', 'B422', 'CMon',
+                         'CTrig', 'CEnc', 'PPS', 'B84', 'B86', 'B94', 'B96']
+    channel_naming    : ['XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX',
+                         'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ',
+                         'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
+                         'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XN1', 'XN1',
+                         'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
+                         '', '', '', '', 'XN1', 'XN1', 'XN1', 'XN1']
+Trigger:
+  asdf_folder        : 'raw'
+  channels           : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58,
+                        59, 60, 61, 62, 63, 64]
+  overlap            : 0.05
+  Gainrange          : 'YAML'             #other option: 'ASDF'
+  bandpass_f_min     : 1000
+  bandpass_f_max     : 12000
+  algorithm          : 'recstalta'        #other option: 'threshold'
+  coincidence        : 10
+  sta_lta:
+    threshold_on     : 8.0
+    threshold_off    : 2.0
+    st_window        : 70                 #in samples
+    lt_window        : 700                #in samples
+  starttime          : 0.005              #time subtracted of earliest trigger time
+  endtime            : 0.015              #time added to earliest trigger time
+  #threshold:
+  #  threshold       : 100.0              # in miliVolt
+  classification:
+    spread_int       : 1e-4
+  noise_vis          : True
+  noise_vis_interval : 60                 # in seconds
+  time_between_events: 0.0006             # in seconds
+  Time               : 20190523_0406      #date and time from which to start processing
+
+
+Processing:
+  parallel_processing: False
+  number_workers     : 5
+  vp                 : 2600.0             # velocity in m/s
+  vs                 : 2000.0             # velocity in m/s
+  bandpass_f_min     : 1000
+  bandpass_f_max     : 12000
+
+  Picking:
+    algorithm        : 'sta_lta'
+    sta_lta:
+      threshold_on   : 8.0
+      threshold_off  : 2.0
+      st_window      : 70                 #in samples        #2.1
+      lt_window      : 700                #in samples        #4.2
+
+  Locate:
+    algorithm        : 'hom_iso'          # other options: hom_iso, hom_aniso
+    min_picks        : 6
+    damping          : 0.01
+
+    hom_aniso:
+      vp_min         : 2400.0
+      epsilon        : 0.263              # Thomsen epsilon
+      delta          : 0.0                # Thomsen delta
+      azi            : 295.0              # Azimuth of anisotropy vector in degrees
+      inc            : 38.0               # Inclination of anisotropy vector in degrees
+
+  Magnitude:
+    algorithm        : 'relative'
+    q                : 30
+    r0               : 10
+    f0               : 5000
+
+  Folders:
+    quakeml_folder            : events
+    plot_folder_active        : event_figs_active
+    plot_folder_passive       : event_figs_passive
+    plot_folder_electronic    : event_figs_electronic
+    noise_vis_folder          : noise_vis
+
+Merge:
+  merge_time_sec              : 60 # in seconds
+  merge_folder                : merge
