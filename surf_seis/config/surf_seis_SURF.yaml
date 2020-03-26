@@ -12,7 +12,7 @@ General:
   project_name       : EGS Collab
   project_location   : SURF 4850L
   operator           : ['M. Schoenball','C. Hopp']
-  sensor_count       : 60
+  sensor_count       : 64
   sensor_coords      : [ # in local coordinate system; x=East, y=North, z=elevation
 822.76625046624,-1293.52821814032,102.689572018464,
 821.1936818054402,-1293.8265303504002,101.98208508088801,
@@ -110,7 +110,7 @@ Acquisition:
                          'PSB9', 'PSB9', 'PST10', 'PST10', 'PST10', 'PST12',
                          'PST12', 'PST12', 'OB13', 'OB13', 'OB13', 'OB15',
                          'OB15', 'OB15', 'OT16', 'OT16', 'OT16', 'OT18', 'OT18',
-                         'OT18']
+                         'OT18', 'CMon', 'CTrig', 'CEnc', 'PPS']
     channel_naming    : ['XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
                          'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
                          'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1', 'XN1',
