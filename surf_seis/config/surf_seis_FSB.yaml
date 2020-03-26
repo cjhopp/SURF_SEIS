@@ -119,8 +119,8 @@ Acquisition:
                          'B75', 'B301', 'B303', 'B305', 'B307', 'B309', 'B310',
                          'B311', 'B312', 'B314', 'B316', 'B318', 'B320', 'B322',
                          'B401', 'B403', 'B405', 'B407', 'B409', 'B410', 'B411',
-                         'B412', 'B414', 'B416', 'B418', 'B420', 'B422', 'CMon',
-                         'CTrig', 'CEnc', 'PPS', 'B84', 'B86', 'B94', 'B96']
+                         'B412', 'B414', 'B416', 'B418', 'B420', 'B422', '',
+                         '', 'PPS', '', 'B84', 'B86', 'B94', 'B96']
     channel_naming    : ['XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX',
                          'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ',
                          'XNX', 'XNY', 'XNZ', 'XNX', 'XNY', 'XNZ', 'XNX', 'XNY',
