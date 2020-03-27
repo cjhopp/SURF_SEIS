@@ -221,6 +221,8 @@ def vibbox_read(fname, param):
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
         A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE * NUM_OF_BUFFERS)
+    import matplotlib.pyplot as plt
+    plt.plot(A, clock_channel, label='1')
     # Sanity check on number of channels provided in yaml
     if len(channels) != no_channels:
         print('Number of channels in config file not equal to number in data')
@@ -228,11 +230,14 @@ def vibbox_read(fname, param):
     # TODO What are the following two lines doing?
     A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / no_channels),
                                            no_channels)) - VOLTAGE_RANGE
+    plt.plot(A, clock_channel, label='2')
     A = A / 4294967296.0
+    plt.plot(A, clock_channel, label='3')
     path, fname = os.path.split(fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
-                                             (2e7 / 2**31))[0][0]-3
+                                             (2e7 / 2**31))[0][0] - 3
+        print(time_to_first_full_second)
         if time_to_first_full_second > 101000:
             print('Cannot read time signal')
         # in case we start during the time pulse
