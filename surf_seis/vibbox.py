@@ -231,7 +231,7 @@ def vibbox_read(fname, param):
     A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE
     A = A / 4294967296.0
     import matplotlib.pyplot as plt
-    plt.plot(A[:, clock_channel], label='3')
+    plt.plot(A[:, clock_channel], label='VOLTAGE_RANGE is int')
     plt.legend()
     path, fname = os.path.split(fname)
     try:
