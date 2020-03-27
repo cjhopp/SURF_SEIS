@@ -211,6 +211,7 @@ def vibbox_read(fname, param):
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
         H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
+        print(H)
         BUFFER_SIZE=H[0]
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
