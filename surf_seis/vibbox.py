@@ -238,14 +238,14 @@ def vibbox_read(fname, param):
     path, fname = os.path.split(fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
-                                             (2e7 / 2**31))[0][0] - 3
+                                             (2e7 / 2**31))[0] - 3
         print(time_to_first_full_second)
         if time_to_first_full_second > 101000:
             print('Cannot read time signal')
         # in case we start during the time pulse
         if time_to_first_full_second < 0:
             time_to_first_full_second = np.where(A[50000:, clock_channel] >
-                                                 (2e7 / 2**31))[0][0] - 3
+                                                 (2e7 / 2**31))[0] - 3
         print(time_to_first_full_second)
         print(np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
                                FREQUENCY))))
