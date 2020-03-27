@@ -231,6 +231,7 @@ def vibbox_read(fname, param):
                                            no_channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
     path, fname = os.path.split(fname)
+    print(path, fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
                                              (2e7 / 2**31))[0][0]-3
@@ -264,6 +265,7 @@ def vibbox_read(fname, param):
         stats.network = network
         stats.station = sta
         stats.channel = channels[i]
+        stats.location = locations[i]
         stats.starttime = starttime
         st.traces.append(Trace(data=A[:, i], header=stats))
     return st
