@@ -223,16 +223,14 @@ def vibbox_read(fname, param):
         A = np.fromfile(f, dtype=np.int32,
                         count=BUFFER_SIZE * NUM_OF_BUFFERS)
         A = A.reshape(int(len(A) / no_channels), no_channels)
-    import matplotlib.pyplot as plt
-    plt.plot(A[:, clock_channel], label='1') # Good here
     # Sanity check on number of channels provided in yaml
     if len(channels) != no_channels:
         print('Number of channels in config file not equal to number in data')
         return
     # TODO What are the following two lines doing?
     A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE
-    plt.plot(A[:, clock_channel], label='2')
     A = A / 4294967296.0
+    import matplotlib.pyplot as plt
     plt.plot(A[:, clock_channel], label='3')
     plt.legend()
     path, fname = os.path.split(fname)
