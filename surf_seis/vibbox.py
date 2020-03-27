@@ -209,7 +209,7 @@ def vibbox_read(fname, param):
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
-    VOLTAGE_RANGE=10.
+    VOLTAGE_RANGE=10
     with open(fname, "rb") as f:
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
@@ -235,8 +235,11 @@ def vibbox_read(fname, param):
     plt.legend()
     path, fname = os.path.split(fname)
     try:
-        time_to_first_full_second = np.where(A[:, clock_channel] >
-                                             (2e7 / 2**31))[0] - 3
+        # Use derivative of PPS signal to find pulse start
+        dt = np.diff(A[:, clock_channel])
+        # Use 100 MAD threshold
+        time_to_first_full_second = np.where(
+            dt > np.mean(dt) + 70 * median_absolute_deviation(dt))[0][0]
         print(time_to_first_full_second)
         if time_to_first_full_second > 101000:
             print('Cannot read time signal')
