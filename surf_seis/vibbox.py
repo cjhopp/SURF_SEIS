@@ -15,9 +15,11 @@ version history:
             detection and recognizing CASSM triggers
 """
 import os
-import obspy
 import numpy as np
 import pandas as pd
+
+from obspy import Stream, Trace, UTCDateTime
+from obspy.core.trace import Stats
 from obspy.signal.trigger import coincidence_trigger
 
 def vibbox_preprocess(st):
@@ -170,7 +172,7 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
         # spurious triggers at beginning of file, should be done differently
         if trig['duration'] > 0.1:
             continue
-        trig_sample = np.int((obspy.UTCDateTime(trig['time']) -
+        trig_sample = np.int((UTCDateTime(trig['time']) -
                               starttime) * st[0].stats.sampling_rate
                              )
         # check if CASSM trigger fired
@@ -193,9 +195,10 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
 
 
 def vibbox_read(fname, param):
+    network = param['General']['stats']['network']
     stations = param['Acquisition']['asdf_settings']['station_naming']
-    location = ['' for i in range(len(stations))]
-    channel = param['Acquisition']['asdf_settings']['channel_naming']
+    locations = ['' for i in range(len(stations))]
+    channels = param['Acquisition']['asdf_settings']['channel_naming']
     # Find channel PPS (pulse per second)
     try:
         clock_channel = np.where(np.array(stations) == 'PPS')[0][0]
@@ -215,18 +218,18 @@ def vibbox_read(fname, param):
         BUFFER_SIZE=H[0]
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
-        channels=H[3]
+        no_channels=H[3]
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
         A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE * NUM_OF_BUFFERS)
+    # Sanity check on number of channels provided in yaml
+    if len(channels) != no_channels:
+        print('Number of channels in config file not equal to number in data')
+        return
+    # TODO What are the following two lines doing?
     A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / channels),
                                            channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
-    # arrange it in an obspy stream
-    tr = []
-    for s in range(channels):
-        tr.append(obspy.Trace(data=A[:, s]))
-    st = obspy.Stream(tr)
     path, fname = os.path.split(fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
@@ -240,7 +243,7 @@ def vibbox_read(fname, param):
         print(time_to_first_full_second)
         print(np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
                                FREQUENCY))))
-        starttime = obspy.UTCDateTime(
+        starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
             np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
@@ -249,16 +252,19 @@ def vibbox_read(fname, param):
         print(e)
         print('Cannot read time exact signal: ' + fname +
               '. Taking an approximate one instead')
-        starttime = obspy.UTCDateTime(
+        starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
             np.int(1e2 * np.int(fname[19:23])))
-    for ii in range(channels):
-        st[ii].stats.network = param['General']['stats']['network']
-        st[ii].stats.station = stations[ii]
-        st[ii].stats.location = location[ii]
-        st[ii].stats.channel = channel[ii]
-        st[ii].stats.starttime = starttime
-        st[ii].stats.sampling_rate = H[1]
+    # arrange it in an obspy stream
+    st = Stream()
+    for i, sta in enumerate(stations):
+        stats = Stats()
+        stats.sampling_rate = H[1]
+        stats.network = network
+        stats.station = sta
+        stats.channel = channels[i]
+        stats.starttime = starttime
+        st += Trace(data=A[:, i], header=stats)
     return st
 
