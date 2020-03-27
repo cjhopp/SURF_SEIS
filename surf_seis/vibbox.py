@@ -214,7 +214,6 @@ def vibbox_read(fname, param):
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
         H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
-        print(H)
         BUFFER_SIZE=H[0]
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
@@ -231,7 +230,6 @@ def vibbox_read(fname, param):
                                            no_channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
     path, fname = os.path.split(fname)
-    print(path, fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
                                              (2e7 / 2**31))[0][0]-3
@@ -240,7 +238,7 @@ def vibbox_read(fname, param):
         # in case we start during the time pulse
         if time_to_first_full_second < 0:
             time_to_first_full_second = np.where(A[50000:, clock_channel] >
-                                                 (2e7 / 2**31))[0][0]-3
+                                                 (2e7 / 2**31))[0][0] - 3
         print(time_to_first_full_second)
         print(np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
                                FREQUENCY))))
@@ -268,5 +266,5 @@ def vibbox_read(fname, param):
         stats.location = locations[i]
         stats.starttime = starttime
         st.traces.append(Trace(data=A[:, i], header=stats))
-    return st
+    return st, A
 
