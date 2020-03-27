@@ -220,19 +220,21 @@ def vibbox_read(fname, param):
         no_channels=H[3]
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
-        A = np.fromfile(f, dtype=np.int32, count=BUFFER_SIZE * NUM_OF_BUFFERS)
+        A = np.fromfile(f, dtype=np.int32,
+                        count=BUFFER_SIZE * NUM_OF_BUFFERS)
+        A = A.reshape(int(len(A) / no_channels), no_channels)
     import matplotlib.pyplot as plt
-    plt.plot(A, clock_channel, label='1')
+    plt.plot(A[:, clock_channel], label='1')
     # Sanity check on number of channels provided in yaml
     if len(channels) != no_channels:
         print('Number of channels in config file not equal to number in data')
         return
     # TODO What are the following two lines doing?
-    A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / no_channels),
-                                           no_channels)) - VOLTAGE_RANGE
-    plt.plot(A, clock_channel, label='2')
+    A = 2 * VOLTAGE_RANGE * A - VOLTAGE_RANGE
+    plt.plot(A[:, clock_channel], label='2')
     A = A / 4294967296.0
-    plt.plot(A, clock_channel, label='3')
+    plt.plot(A[:, clock_channel], label='3')
+    plt.legend()
     path, fname = os.path.split(fname)
     try:
         time_to_first_full_second = np.where(A[:, clock_channel] >
