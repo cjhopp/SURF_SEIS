@@ -275,6 +275,6 @@ def vibbox_read(fname, param):
         stats.channel = channels[i]
         stats.location = locations[i]
         stats.starttime = starttime
-        st.traces.append(Trace(data=A[:, i], header=stats))
+        st.traces.append(Trace(data=A[:, i].copy(), header=stats))
     return st, A
 
