@@ -227,8 +227,8 @@ def vibbox_read(fname, param):
         print('Number of channels in config file not equal to number in data')
         return
     # TODO What are the following two lines doing?
-    A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / channels),
-                                           channels)) - VOLTAGE_RANGE
+    A = 2 * VOLTAGE_RANGE * np.reshape(A, (int(len(A) / no_channels),
+                                           no_channels)) - VOLTAGE_RANGE
     A = A / 4294967296.0
     path, fname = os.path.split(fname)
     try:
