@@ -269,7 +269,7 @@ def vibbox_read(fname, param):
     for i, sta in enumerate(stations):
         print(A[:, i])
         stats = Stats()
-        stats.sampling_rate = np.round(H[1])
+        stats.sampling_rate = round(H[1], 1)
         stats.network = network
         stats.station = sta
         stats.channel = channels[i]
