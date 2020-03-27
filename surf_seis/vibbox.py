@@ -267,6 +267,7 @@ def vibbox_read(fname, param):
     # arrange it in an obspy stream
     st = Stream()
     for i, sta in enumerate(stations):
+        print(A[:, i])
         stats = Stats()
         stats.sampling_rate = H[1]
         stats.network = network
