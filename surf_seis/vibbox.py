@@ -18,6 +18,7 @@ import os
 import numpy as np
 import pandas as pd
 
+from scipy.stats import median_absolute_deviation
 from obspy import Stream, Trace, UTCDateTime
 from obspy.core.trace import Stats
 from obspy.signal.trigger import coincidence_trigger
@@ -227,33 +228,33 @@ def vibbox_read(fname, param):
     if len(channels) != no_channels:
         print('Number of channels in config file not equal to number in data')
         return
-    # TODO What are the following two lines doing?
     A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE
     A = A / 4294967296.0
-    import matplotlib.pyplot as plt
-    plt.plot(A[:, clock_channel], label='VOLTAGE_RANGE is float')
-    plt.legend()
     path, fname = os.path.split(fname)
     try:
         # Use derivative of PPS signal to find pulse start
         dt = np.diff(A[:, clock_channel])
-        # Use 100 MAD threshold
-        time_to_first_full_second = np.where(
+        # Use 70 MAD threshold
+        samp_to_first_full_second = np.where(
             dt > np.mean(dt) + 70 * median_absolute_deviation(dt))[0][0]
-        print(time_to_first_full_second)
-        if time_to_first_full_second > 101000:
+        print(samp_to_first_full_second)
+        # Condition where PPS not recorded properly
+        if samp_to_first_full_second > 101000:
             print('Cannot read time signal')
-        # in case we start during the time pulse
-        if time_to_first_full_second < 0:
-            time_to_first_full_second = np.where(A[50000:, clock_channel] >
-                                                 (2e7 / 2**31))[0] - 3
-        print(time_to_first_full_second)
-        print(np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
+            return
+        # If we start during the time pulse, use end of pulse for timing
+        if samp_to_first_full_second > 90000:
+            # Negative dt
+            samp_to_first_full_second = np.where(
+                dt < np.mean(dt) - 70 *
+                median_absolute_deviation(dt))[0][0] + 90000
+        print(samp_to_first_full_second)
+        print(np.int(1e6 * (1 - (np.float(samp_to_first_full_second) /
                                FREQUENCY))))
         starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
-            np.int(1e6 * (1 - (np.float(time_to_first_full_second) /
+            np.int(1e6 * (1 - (np.float(samp_to_first_full_second) /
                                FREQUENCY))))
     except Exception as e:
         print(e)
