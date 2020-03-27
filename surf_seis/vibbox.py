@@ -209,7 +209,7 @@ def vibbox_read(fname, param):
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
-    VOLTAGE_RANGE=10
+    VOLTAGE_RANGE=10.
     with open(fname, "rb") as f:
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
