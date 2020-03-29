@@ -214,14 +214,14 @@ def vibbox_read(fname, param):
     with open(fname, "rb") as f:
         f.seek(HEADER_OFFSET, os.SEEK_SET)
         # read header
-        H = np.fromfile(f, dtype=np.int32, count=HEADER_SIZE)
+        H = np.fromfile(f, dtype=np.uint32, count=HEADER_SIZE)
         BUFFER_SIZE=H[0]
         FREQUENCY=H[1]
         NUM_OF_BUFFERS=H[2]
         no_channels=H[3]
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
-        A = np.fromfile(f, dtype=np.int32,
+        A = np.fromfile(f, dtype=np.uint32,
                         count=BUFFER_SIZE * NUM_OF_BUFFERS)
         A = A.reshape(int(len(A) / no_channels), no_channels)
     # Sanity check on number of channels provided in yaml
