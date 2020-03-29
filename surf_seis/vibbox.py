@@ -221,7 +221,7 @@ def vibbox_read(fname, param):
         no_channels=H[3]
         # read data
         f.seek(DATA_OFFSET, os.SEEK_SET)
-        A = np.fromfile(f, dtype=np.int64,
+        A = np.fromfile(f, dtype=np.int32,
                         count=BUFFER_SIZE * NUM_OF_BUFFERS)
         A = A.reshape(int(len(A) / no_channels), no_channels)
     # Sanity check on number of channels provided in yaml
@@ -229,7 +229,7 @@ def vibbox_read(fname, param):
         print('Number of channels in config file not equal to number in data')
         return
     A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE
-    A = A / 2**64
+    A = A / 4294967296.
     path, fname = os.path.split(fname)
     try:
         # Use derivative of PPS signal to find pulse start
