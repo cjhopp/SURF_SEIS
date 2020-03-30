@@ -206,7 +206,7 @@ def vibbox_read(fname, param):
     except IndexError:
         print('No PPS channel in file. Not reading')
         return
-    # TODO Everything from here to file open should go in config
+    # TODO Everything from here to file open should go in config?
     HEADER_SIZE=4
     HEADER_OFFSET=27
     DATA_OFFSET=148
@@ -228,16 +228,15 @@ def vibbox_read(fname, param):
     if len(channels) != no_channels:
         print('Number of channels in config file not equal to number in data')
         return
-    A = A / 2**32
-    A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE
+    A = A / 2**32  # Norm to 32-bit
+    A = (2 * VOLTAGE_RANGE * A) - VOLTAGE_RANGE  # Demean
     path, fname = os.path.split(fname)
     try:
         # Use derivative of PPS signal to find pulse start
         dt = np.diff(A[:, clock_channel])
-        # Use 70 MAD threshold
+        # Use 70 * MAD threshold
         samp_to_first_full_second = np.where(
             dt > np.mean(dt) + 70 * median_absolute_deviation(dt))[0][0]
-        print(samp_to_first_full_second)
         # Condition where PPS not recorded properly
         if samp_to_first_full_second > 101000:
             print('Cannot read time signal')
@@ -248,9 +247,6 @@ def vibbox_read(fname, param):
             samp_to_first_full_second = np.where(
                 dt < np.mean(dt) - 70 *
                 median_absolute_deviation(dt))[0][0] + 90000
-        print(samp_to_first_full_second)
-        print(np.int(1e6 * (1 - (np.float(samp_to_first_full_second) /
-                                 FREQUENCY))))
         starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
@@ -277,5 +273,5 @@ def vibbox_read(fname, param):
         stats.location = locations[i]
         stats.starttime = starttime
         st.traces.append(Trace(data=A[:, i], header=stats))
-    return st, A
+    return st
 
