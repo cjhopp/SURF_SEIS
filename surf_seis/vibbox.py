@@ -272,6 +272,7 @@ def vibbox_read(fname, param):
         stats.channel = channels[i]
         stats.location = locations[i]
         stats.starttime = starttime
-        st.traces.append(Trace(data=A[:, i], header=stats))
+        # Create new array to avoid non-contiguous warning in obspy.core.mseed
+        st.traces.append(Trace(data=np.array(A[:, i]), header=stats))
     return st
 
