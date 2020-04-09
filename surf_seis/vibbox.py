@@ -198,7 +198,7 @@ def vibbox_trigger(st, freqmin=1000, freqmax=15000, sta=0.01, lta=0.05, on=1.3,
     return df_triggers
 
 
-def vibbox_read(fname, param):
+def vibbox_read(fname, param, debug=0):
     network = param['General']['stats']['network']
     stations = param['Acquisition']['asdf_settings']['station_naming']
     locations = ['' for i in range(len(stations))]
