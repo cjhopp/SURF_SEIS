@@ -234,6 +234,9 @@ def vibbox_read(fname, param):
     try:
         # Use derivative of PPS signal to find pulse start
         dt = np.diff(A[:, clock_channel])
+        import matplotlib.pyplot as plt
+        plt.plot(dt)
+        plt.plot(A[:, clock_channel])
         # Use 70 * MAD threshold
         samp_to_first_full_second = np.where(
             dt > np.mean(dt) + 70 * median_absolute_deviation(dt))[0][0]
