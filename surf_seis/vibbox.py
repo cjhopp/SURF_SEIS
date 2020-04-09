@@ -23,6 +23,9 @@ from obspy import Stream, Trace, UTCDateTime
 from obspy.core.trace import Stats
 from obspy.signal.trigger import coincidence_trigger
 
+import matplotlib.pyplot as plt
+
+
 def vibbox_preprocess(st):
     # PDB
     ## De-Median PDB hydrophones
@@ -234,9 +237,6 @@ def vibbox_read(fname, param):
     try:
         # Use derivative of PPS signal to find pulse start
         dt = np.diff(A[:, clock_channel])
-        import matplotlib.pyplot as plt
-        plt.plot(dt)
-        plt.plot(A[:, clock_channel])
         # Use 70 * MAD threshold
         samp_to_first_full_second = np.where(
             dt > np.mean(dt) + 70 * median_absolute_deviation(dt))[0][0]
@@ -251,6 +251,13 @@ def vibbox_read(fname, param):
             samp_to_first_full_second = np.where(
                 dt < np.mean(dt) - 70 *
                 median_absolute_deviation(dt))[0][0] + 90000
+        if debug > 0:
+            plt.plot(dt, color='r')
+            plt.plot(A[:, clock_channel], color='k')
+            plt.axhline(y=np.mean(dt) + 70 * median_absolute_deviation(dt),
+                        color='magenta', linestyle='--')
+            plt.axvline(x=samp_to_first_full_second, color='magenta',
+                        linestyle='--')
         starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
