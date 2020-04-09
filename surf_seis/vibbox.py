@@ -243,6 +243,7 @@ def vibbox_read(fname, param):
             return
         # If we start during the time pulse, use end of pulse for timing
         if samp_to_first_full_second > 90000:
+            print('Start of data is during time pulse. Using end of pulse.')
             # Negative dt
             samp_to_first_full_second = np.where(
                 dt < np.mean(dt) - 70 *
@@ -275,4 +276,3 @@ def vibbox_read(fname, param):
         # Create new array to avoid non-contiguous warning in obspy.core.mseed
         st.traces.append(Trace(data=np.array(A[:, i]), header=stats))
     return st
-
