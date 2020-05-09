@@ -101,23 +101,33 @@ def vibbox_preprocess(st):
 def vibbox_custom_filter(st):
     hydrophones = list(np.arange(0, 24)) # hydrophones +  
     for comp in hydrophones:
-        st[comp].filter('bandstop', freqmin=14480, freqmax=14880, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=20500, freqmax=20850, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=21160, freqmax=21560, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=35780, freqmax=36080, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=41200, freqmax=41500, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=42320, freqmax=42920, corners=2, zerophase=True)
+        st[comp].filter('bandstop', freqmin=14480, freqmax=14880, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=20500, freqmax=20850, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=21160, freqmax=21560, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=35780, freqmax=36080, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=41200, freqmax=41500, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=42320, freqmax=42920, corners=2,
+                        zerophase=True)
     ot_a_16 = list(np.arange(54, 57)) # OT_A.16  
     for comp in ot_a_16:
-        st[comp].filter('bandstop', freqmin=42320, freqmax=42920, corners=2, zerophase=True)
-    lowpass_42khz = list(np.arange(12, 17)) + list(np.arange(27, 30)) + list(np.arange(45, 48))
+        st[comp].filter('bandstop', freqmin=42320, freqmax=42920, corners=2,
+                        zerophase=True)
+    lowpass_42khz = list(np.arange(12, 17)) + list(np.arange(27, 30)) +\
+                    list(np.arange(45, 48))
     lowpass_42khz.append(49) # OT_H01-04, PDB_A3, PST_A12, OB_A13.X
     for comp in lowpass_42khz:
         st[comp].filter('lowpass', freq=42000, zerophase=True)
     ot_h01_04 = np.arange(12, 17)
     for comp in ot_h01_04:
-        st[comp].filter('bandstop', freqmin=33870, freqmax=34470, corners=2, zerophase=True)
-        st[comp].filter('bandstop', freqmin=21500, freqmax=24000, corners=2, zerophase=True)        
+        st[comp].filter('bandstop', freqmin=33870, freqmax=34470, corners=2,
+                        zerophase=True)
+        st[comp].filter('bandstop', freqmin=21500, freqmax=24000, corners=2,
+                        zerophase=True)
         
     return(st)
 
@@ -252,12 +262,16 @@ def vibbox_read(fname, param, debug=0):
                 dt < np.mean(dt) - 70 *
                 median_absolute_deviation(dt))[0][0] + 90000
         if debug > 0:
-            plt.plot(dt, color='r')
-            plt.plot(A[:, clock_channel], color='k')
-            plt.axhline(y=np.mean(dt) + 70 * median_absolute_deviation(dt),
-                        color='magenta', linestyle='--')
-            plt.axvline(x=samp_to_first_full_second, color='magenta',
-                        linestyle='--')
+            fig, ax = plt.subplots()
+            ax.plot(dt, color='r')
+            ax.plot(A[:, clock_channel], color='k')
+            ax.axhline(y=np.mean(dt) + 70 * median_absolute_deviation(dt),
+                       color='magenta', linestyle='--')
+            ax.axvline(x=samp_to_first_full_second, color='magenta',
+                       linestyle='--')
+            fig.text(x=0.75, y=0.75, s=samp_to_first_full_second,
+                     fontsize=14)
+            plt.show()
         starttime = UTCDateTime(
             np.int(fname[5:9]), np.int(fname[9:11]), np.int(fname[11:13]),
             np.int(fname[13:15]), np.int(fname[15:17]), np.int(fname[17:19]),
