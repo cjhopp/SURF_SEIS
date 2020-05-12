@@ -98,7 +98,7 @@ Acquisition:
   asdf_settings:
     # save_mV = true uses float32 and results in much larger asdf file sizes
     save_mV           : False
-    data_folder       : 'raw/'
+    data_folder       : '/media/chet/data/chet-collab/wavs/vbox_h5'
     data_folder_tmp   : 'raw/tmp_'
     # default: 'gzip-3', 'gzip-0' to 'gzip-9' or None
     compression       : 'gzip-3'
