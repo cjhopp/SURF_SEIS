@@ -98,11 +98,11 @@ Acquisition:
   asdf_settings:
     # save_mV = true uses float32 and results in much larger asdf file sizes
     save_mV           : False
-    data_folder       : '/media/chet/data/chet-collab/wavs/vbox_h5'
+    data_folder       : '/bear0-data/bear-temp/sigmav/vbox_h5'
     data_folder_tmp   : 'raw/tmp_'
     # default: 'gzip-3', 'gzip-0' to 'gzip-9' or None
     compression       : 'gzip-3'
-    file_length_sec   : 30.0
+    file_length_sec   : 32.0
     station_naming    : ['PDB01', 'PDB02', 'PDB03', 'PDB04', 'PDB05', 'PDB06',
                          'PDB07', 'PDB08', 'PDB09', 'PDB10', 'PDB11', 'PDB12',
                          'OT01', 'OT02', 'OT03', 'OT04', 'OT05', 'OT06', 'OT07',
